@@ -82,13 +82,22 @@ export function FeaturedListingCard() {
     if (!listing) return
     setCanceling(true)
     setError('')
-    const res = await fetch(`/api/featured/${listing.id}`, { method: 'DELETE' })
-    // Treat 404 and 409 as success (listing already gone or inactive)
-    if (res.ok || res.status === 404 || res.status === 409) {
-      setListing(null)
-    } else {
-      const data = await res.json()
-      setError(data.error ?? 'Erro ao cancelar.')
+    try {
+      const res = await fetch(`/api/featured/${listing.id}`, { method: 'DELETE' })
+      // Treat 404 and 409 as success (listing already gone or inactive)
+      if (res.ok || res.status === 404 || res.status === 409) {
+        setListing(null)
+      } else {
+        let data: { error?: string } = {}
+        try {
+          data = await res.json()
+        } catch {
+          // non-JSON response — fall through to generic error
+        }
+        setError(data.error ?? 'Erro ao cancelar.')
+      }
+    } catch {
+      setError('Erro de conexão. Tente novamente.')
     }
     setCanceling(false)
   }
