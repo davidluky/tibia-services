@@ -19,7 +19,7 @@ export default async function AdminPage() {
 
   const stats = [
     { label: 'Verificações pendentes', value: pendingVerifs ?? 0, href: '/admin/verifications', urgent: (pendingVerifs ?? 0) > 0 },
-    { label: 'Reservas ativas', value: activeBookings ?? 0, href: '/admin/verifications' },
+    { label: 'Reservas ativas', value: activeBookings ?? 0, href: '/admin/disputes' },
     { label: 'Total de usuários', value: totalUsers ?? 0, href: '/admin/users' },
     { label: 'Total de avaliações', value: totalReviews ?? 0, href: '/admin/reviews' },
   ]
