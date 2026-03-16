@@ -17,9 +17,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'O motivo deve ter entre 10 e 500 caracteres.' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
-
-  const { data: booking } = await admin
+  const { data: booking } = await supabase
     .from('bookings')
     .select('id, customer_id, serviceiro_id, status')
     .eq('id', booking_id)
@@ -34,6 +32,8 @@ export async function POST(request: NextRequest) {
   if (booking.status !== 'active') {
     return NextResponse.json({ error: 'Reserva não está ativa.' }, { status: 409 })
   }
+
+  const admin = createAdminClient()
 
   const { data: existing } = await admin
     .from('disputes')
@@ -61,7 +61,9 @@ export async function POST(request: NextRequest) {
     .eq('id', booking_id)
 
   if (updateError) {
-    console.error('[disputes] Failed to update booking status:', updateError)
+    console.error('[disputes] Failed to update booking status, rolling back dispute:', updateError)
+    await admin.from('disputes').delete().eq('id', dispute.id)
+    return NextResponse.json({ error: 'Erro ao abrir disputa. Tente novamente.' }, { status: 500 })
   }
 
   return NextResponse.json({ id: dispute.id })

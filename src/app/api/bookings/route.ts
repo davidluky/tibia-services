@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Erro ao criar reserva.' }, { status: 500 })
   }
 
-  sendBookingCreated({
+  void sendBookingCreated({
     bookingId: booking.id,
     serviceiroId: serviceiro_id,
     customerName: profile.display_name ?? 'Cliente',
