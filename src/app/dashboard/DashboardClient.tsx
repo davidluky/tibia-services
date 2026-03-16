@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { createClient } from '@/lib/supabase/client'
@@ -47,6 +47,20 @@ export function DashboardClient({ profile, serviceiroProfile, userId }: Dashboar
   const [error, setError] = useState('')
 
   const supabase = createClient()
+
+  // Auto-detect browser timezone for first-time setup
+  useEffect(() => {
+    if (serviceiroProfile?.timezone_offset == null) {
+      try {
+        const offsetMinutes = -new Date().getTimezoneOffset()
+        const offsetHours = Math.round(offsetMinutes / 60)
+        setTzOffset(offsetHours)
+      } catch {
+        // keep default
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const toggle = (list: string[], setList: (v: string[]) => void, key: string) => {
     setList(list.includes(key) ? list.filter(x => x !== key) : [...list, key])
