@@ -37,7 +37,15 @@ export function FeaturedListingCard() {
   const fetchListing = () => {
     fetch('/api/featured')
       .then(r => r.json())
-      .then(data => setListing(data.listing ?? null))
+      .then(data => {
+        const l = data.listing ?? null
+        // Treat expired active listing as null (allow requesting new one)
+        if (l && l.status === 'active' && l.expires_at && new Date(l.expires_at) <= new Date()) {
+          setListing(null)
+        } else {
+          setListing(l)
+        }
+      })
       .catch(() => setListing(null))
   }
 
@@ -46,18 +54,27 @@ export function FeaturedListingCard() {
   const handleSubmit = async () => {
     setSubmitting(true)
     setError('')
-    const res = await fetch('/api/featured', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tc_amount: days * TC_PER_DAY }),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error ?? 'Erro ao solicitar destaque.')
-      setSubmitting(false)
-      return
+    try {
+      const res = await fetch('/api/featured', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tc_amount: days * TC_PER_DAY }),
+      })
+      let data: { error?: string; id?: string } = {}
+      try {
+        data = await res.json()
+      } catch {
+        // non-JSON response — fall through to generic error
+      }
+      if (!res.ok) {
+        setError(data.error ?? 'Erro ao solicitar destaque.')
+        setSubmitting(false)
+        return
+      }
+      fetchListing()
+    } catch {
+      setError('Erro de conexão. Tente novamente.')
     }
-    fetchListing()
     setSubmitting(false)
   }
 
