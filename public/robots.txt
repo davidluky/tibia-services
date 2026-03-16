@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Allow: /browse
+Allow: /servicos
+Allow: /serviceiro/
+
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /bookings
+Disallow: /auth
+
+Sitemap: https://tibiaservices.com.br/sitemap.xml
