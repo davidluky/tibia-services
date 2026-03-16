@@ -55,6 +55,17 @@ export function capitalise(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+/**
+ * Strips HTML tags from user input to prevent stored XSS.
+ * Call on any user-provided text before storing in the database.
+ */
+export function sanitizeText(input: string): string {
+  return input
+    .replace(/<[^>]*>/g, '')      // strip HTML tags
+    .replace(/javascript:/gi, '') // strip JS protocol
+    .trim()
+}
+
 // How long a user has been a member, locale-aware
 export function memberSince(isoString: string, lang: string): string {
   const diffMs = Date.now() - new Date(isoString).getTime()

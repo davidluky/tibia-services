@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { VOCATIONS, GAMEPLAY_TYPES, WEEKDAYS } from '@/lib/constants'
+import { sanitizeText } from '@/lib/utils'
 import type { Profile } from '@/lib/types'
 import { useLanguage } from '@/lib/language-context'
 import { CharacterVerificationCard } from '@/components/serviceiro/CharacterVerificationCard'
@@ -56,8 +57,8 @@ export function DashboardClient({ profile, serviceiroProfile, userId }: Dashboar
     setSaved(false)
 
     const profileRes = await supabase.from('profiles').update({
-      display_name: displayName,
-      bio: bio || null,
+      display_name: sanitizeText(displayName),
+      bio: bio ? sanitizeText(bio) : null,
       whatsapp: whatsapp || null,
       discord: discord || null,
     }).eq('id', userId)

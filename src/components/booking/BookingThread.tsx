@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { timeAgo, formatTC } from '@/lib/utils'
+import { timeAgo, formatTC, sanitizeText } from '@/lib/utils'
 import { GAMEPLAY_TYPES } from '@/lib/constants'
 import type { Booking, Message, Dispute } from '@/lib/types'
 import { useLanguage } from '@/lib/language-context'
@@ -72,10 +72,13 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
     setSendingMessage(true)
     setError('')
 
+    const cleanContent = sanitizeText(newMessage)
+    if (!cleanContent) return
+
     const res = await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ booking_id: booking.id, content: newMessage }),
+      body: JSON.stringify({ booking_id: booking.id, content: cleanContent }),
     })
 
     if (res.ok) {

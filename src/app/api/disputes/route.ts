@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sanitizeText } from '@/lib/utils'
 
 export async function POST(request: NextRequest) {
   const supabase = createClient()
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
 
   const { data: dispute, error: insertError } = await admin
     .from('disputes')
-    .insert({ booking_id, opened_by: user.id, reason })
+    .insert({ booking_id, opened_by: user.id, reason: sanitizeText(reason as string) })
     .select('id')
     .single()
 
