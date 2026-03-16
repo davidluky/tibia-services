@@ -1,17 +1,10 @@
 'use client'
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { ServiceiroFilters, type Filters } from '@/components/serviceiro/ServiceiroFilters'
 import { ServiceiroCard } from '@/components/serviceiro/ServiceiroCard'
 import type { ServiceiroWithProfile } from '@/lib/types'
 import { useLanguage } from '@/lib/language-context'
-
-const DEFAULT_FILTERS: Filters = {
-  vocations: [],
-  gameplay_types: [],
-  weekdays: [],
-  registered_only: false,
-  search: '',
-}
 
 function applyFilters(serviceiros: ServiceiroWithProfile[], filters: Filters): ServiceiroWithProfile[] {
   return serviceiros.filter(s => {
@@ -22,18 +15,16 @@ function applyFilters(serviceiros: ServiceiroWithProfile[], filters: Filters): S
       if (!(s.profile.display_name ?? '').toLowerCase().includes(q)) return false
     }
 
-    const vocations      = s.vocations ?? []
-    const gameplayTypes  = s.gameplay_types ?? []
-    const weekdays       = s.available_weekdays ?? []
+    const vocations     = s.vocations ?? []
+    const gameplayTypes = s.gameplay_types ?? []
+    const weekdays      = s.available_weekdays ?? []
 
     if (filters.vocations.length > 0) {
       if (!filters.vocations.some(v => vocations.includes(v as never))) return false
     }
-
     if (filters.gameplay_types.length > 0) {
       if (!filters.gameplay_types.some(g => gameplayTypes.includes(g as never))) return false
     }
-
     if (filters.weekdays.length > 0) {
       if (!filters.weekdays.some(d => weekdays.includes(d as never))) return false
     }
@@ -44,12 +35,29 @@ function applyFilters(serviceiros: ServiceiroWithProfile[], filters: Filters): S
 
 interface BrowseClientProps {
   serviceiros: ServiceiroWithProfile[]
+  initialFilters: Filters
 }
 
-export function BrowseClient({ serviceiros }: BrowseClientProps) {
+export function BrowseClient({ serviceiros, initialFilters }: BrowseClientProps) {
   const { t } = useLanguage()
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
+  const router = useRouter()
+  const pathname = usePathname()
+  const [filters, setFilters] = useState<Filters>(initialFilters)
   const [filtersOpen, setFiltersOpen] = useState(false)
+
+  const handleFilterChange = useCallback((newFilters: Filters) => {
+    setFilters(newFilters)
+
+    const params = new URLSearchParams()
+    if (newFilters.search) params.set('search', newFilters.search)
+    if (newFilters.vocations.length > 0) params.set('vocations', newFilters.vocations.join(','))
+    if (newFilters.gameplay_types.length > 0) params.set('gameplay_types', newFilters.gameplay_types.join(','))
+    if (newFilters.weekdays.length > 0) params.set('weekdays', newFilters.weekdays.join(','))
+    if (newFilters.registered_only) params.set('registered_only', 'true')
+
+    const query = params.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }, [pathname, router])
 
   const filtered = applyFilters(serviceiros, filters)
 
@@ -60,7 +68,6 @@ export function BrowseClient({ serviceiros }: BrowseClientProps) {
         <p className="text-text-muted text-sm">{filtered.length} {filtered.length !== 1 ? t('browse_result_count_plural') : t('browse_result_count_singular')}</p>
       </div>
 
-      {/* Mobile filter toggle */}
       <button
         className="md:hidden mb-4 flex items-center gap-2 text-sm text-text-muted border border-border rounded-md px-4 py-2 hover:border-gold/50 transition-colors"
         onClick={() => setFiltersOpen(!filtersOpen)}
@@ -69,12 +76,10 @@ export function BrowseClient({ serviceiros }: BrowseClientProps) {
       </button>
 
       <div className="flex gap-8">
-        {/* Filters sidebar */}
         <div className={`${filtersOpen ? 'block' : 'hidden'} md:block w-full md:w-64 shrink-0`}>
-          <ServiceiroFilters filters={filters} onChange={setFilters} />
+          <ServiceiroFilters filters={filters} onChange={handleFilterChange} />
         </div>
 
-        {/* Results grid */}
         <div className="flex-1">
           {filtered.length === 0 ? (
             <div className="text-center py-20 text-text-muted">

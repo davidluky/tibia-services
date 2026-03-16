@@ -95,7 +95,26 @@ async function getAllServiceiros(): Promise<ServiceiroWithProfile[]> {
   return [...featured, ...nonFeatured]
 }
 
-export default async function BrowsePage() {
+interface BrowsePageProps {
+  searchParams: {
+    search?: string
+    vocations?: string
+    gameplay_types?: string
+    weekdays?: string
+    registered_only?: string
+  }
+}
+
+export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   const serviceiros = await getAllServiceiros()
-  return <BrowseClient serviceiros={serviceiros} />
+
+  const initialFilters = {
+    search: searchParams.search ?? '',
+    vocations: searchParams.vocations ? searchParams.vocations.split(',') : [],
+    gameplay_types: searchParams.gameplay_types ? searchParams.gameplay_types.split(',') : [],
+    weekdays: searchParams.weekdays ? searchParams.weekdays.split(',') : [],
+    registered_only: searchParams.registered_only === 'true',
+  }
+
+  return <BrowseClient serviceiros={serviceiros} initialFilters={initialFilters} />
 }
