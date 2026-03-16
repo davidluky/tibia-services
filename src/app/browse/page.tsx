@@ -15,41 +15,55 @@ async function getAllServiceiros(): Promise<ServiceiroWithProfile[]> {
     `)
     .eq('profiles.is_banned', false)
 
-  if (error || !data) return []
+  if (error || !data || data.length === 0) return []
 
-  const results: ServiceiroWithProfile[] = await Promise.all(
-    data.map(async (sp) => {
-      const { data: reviews } = await supabase
-        .from('reviews')
-        .select('rating')
-        .eq('serviceiro_id', sp.id)
-        .eq('is_visible', true)
+  const ids = data.map(sp => sp.id)
 
-      const { data: completions } = await supabase
-        .from('serviceiro_completion_counts')
-        .select('service_type, count')
-        .eq('serviceiro_id', sp.id)
+  // Batch: one query for all reviews, one for all completion counts
+  const [{ data: allReviews }, { data: allCompletions }] = await Promise.all([
+    supabase
+      .from('reviews')
+      .select('serviceiro_id, rating')
+      .in('serviceiro_id', ids)
+      .eq('is_visible', true),
+    supabase
+      .from('serviceiro_completion_counts')
+      .select('serviceiro_id, service_type, count')
+      .in('serviceiro_id', ids),
+  ])
 
-      const avg_rating = reviews && reviews.length > 0
-        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-        : null
+  // Build lookup maps
+  const reviewMap = new Map<string, number[]>()
+  allReviews?.forEach(r => {
+    const list = reviewMap.get(r.serviceiro_id) ?? []
+    list.push(r.rating)
+    reviewMap.set(r.serviceiro_id, list)
+  })
 
-      const completion_counts: Record<string, number> = {}
-      completions?.forEach(c => {
-        completion_counts[c.service_type] = Number(c.count)
-      })
+  const completionMap = new Map<string, Record<string, number>>()
+  allCompletions?.forEach(c => {
+    const map = completionMap.get(c.serviceiro_id) ?? {}
+    map[c.service_type] = Number(c.count)
+    completionMap.set(c.serviceiro_id, map)
+  })
 
-      return {
-        ...sp,
-        profile: sp.profile as ServiceiroWithProfile['profile'],
-        avg_rating,
-        review_count: reviews?.length ?? 0,
-        completion_counts: completion_counts as Record<GameplayTypeKey, number>,
-      }
-    })
-  )
+  const results: ServiceiroWithProfile[] = data.map(sp => {
+    const ratings = reviewMap.get(sp.id) ?? []
+    const avg_rating = ratings.length > 0
+      ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length
+      : null
 
-  // Fetch currently active featured listings (bypasses RLS — public browse page)
+    return {
+      ...sp,
+      profile: sp.profile as ServiceiroWithProfile['profile'],
+      avg_rating,
+      review_count: ratings.length,
+      completion_counts: (completionMap.get(sp.id) ?? {}) as Record<GameplayTypeKey, number>,
+      featured_until: null,
+    }
+  })
+
+  // Fetch currently active featured listings
   const adminClient = createAdminClient()
   const { data: featuredRows } = await adminClient
     .from('featured_listings')
@@ -59,13 +73,11 @@ async function getAllServiceiros(): Promise<ServiceiroWithProfile[]> {
 
   const featuredMap = new Map(featuredRows?.map(f => [f.serviceiro_id, f.expires_at as string]) ?? [])
 
-  // Attach featured_until to each serviceiro
   const enriched = results.map(s => ({
     ...s,
     featured_until: featuredMap.get(s.id) ?? null,
   }))
 
-  // Sort: featured first (by avg_rating DESC, created_at DESC), then non-featured (is_registered DESC, avg_rating DESC)
   const featured = enriched
     .filter(s => s.featured_until !== null)
     .sort((a, b) =>
