@@ -246,21 +246,21 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
         {/* Disputed state card */}
         {booking.status === 'disputed' && dispute && (
           <Card className="p-4 border border-status-warning/30 bg-status-warning/5">
-            <h3 className="text-sm font-semibold text-status-warning mb-2">Esta reserva está em disputa</h3>
+            <h3 className="text-sm font-semibold text-status-warning mb-2">{t('booking_disputed_title')}</h3>
             <p className="text-sm text-text-primary mb-1">
-              <span className="text-text-muted">Motivo: </span>{dispute.reason}
+              <span className="text-text-muted">{t('booking_disputed_reason')} </span>{dispute.reason}
             </p>
             <p className="text-xs text-text-muted">
-              Aberta por <span className="text-text-primary">{dispute.opener?.display_name ?? 'participante'}</span>
+              {t('booking_disputed_opened_by')} <span className="text-text-primary">{dispute.opener?.display_name ?? t('booking_participant_fallback')}</span>
             </p>
-            <p className="text-xs text-text-muted mt-2">Aguardando resolução do admin.</p>
+            <p className="text-xs text-text-muted mt-2">{t('booking_disputed_waiting')}</p>
           </Card>
         )}
 
         {/* Resolved state card */}
         {booking.status === 'resolved' && dispute && (
           <Card className="p-4 border border-border bg-border/10">
-            <h3 className="text-sm font-semibold text-text-muted mb-2">Disputa resolvida</h3>
+            <h3 className="text-sm font-semibold text-text-muted mb-2">{t('booking_resolved_title')}</h3>
             <p className="text-sm text-text-primary">{dispute.resolution ?? ''}</p>
           </Card>
         )}
