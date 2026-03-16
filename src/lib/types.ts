@@ -50,12 +50,13 @@ export interface Booking {
   payment_received_by_serviceiro: boolean
   complete_by_customer: boolean
   complete_by_serviceiro: boolean
-  status: 'pending' | 'active' | 'completed' | 'declined' | 'cancelled'
+  status: 'pending' | 'active' | 'completed' | 'declined' | 'cancelled' | 'disputed' | 'resolved'
   created_at: string
   completed_at: string | null
   // Joined fields
   customer?: Profile
   serviceiro?: Profile
+  dispute?: Dispute
 }
 
 export interface Message {
@@ -65,6 +66,20 @@ export interface Message {
   content: string
   created_at: string
   sender?: Profile
+}
+
+export interface Dispute {
+  id: string
+  booking_id: string
+  opened_by: string
+  reason: string
+  status: 'open' | 'resolved'
+  resolution: string | null
+  resolved_by: string | null
+  opened_at: string
+  resolved_at: string | null
+  // Joined fields
+  opener?: { display_name: string }
 }
 
 export interface Review {
