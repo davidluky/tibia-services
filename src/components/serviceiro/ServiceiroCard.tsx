@@ -9,18 +9,24 @@ import { useLanguage } from '@/lib/language-context'
 
 interface ServiceiroCardProps {
   serviceiro: ServiceiroWithProfile
+  isFeatured?: boolean
 }
 
-export function ServiceiroCard({ serviceiro }: ServiceiroCardProps) {
+export function ServiceiroCard({ serviceiro, isFeatured }: ServiceiroCardProps) {
   const { t } = useLanguage()
   const { profile } = serviceiro
 
   return (
     <Link href={`/serviceiro/${profile.id}`}>
       <Card
-        gold={serviceiro.is_registered}
-        className="p-5 cursor-pointer animate-fade-in hover:translate-y-[-2px] transition-all"
+        gold={isFeatured || serviceiro.is_registered}
+        className={`p-5 cursor-pointer animate-fade-in hover:translate-y-[-2px] transition-all${isFeatured ? ' shadow-gold/20 shadow-md' : ''}`}
       >
+        {/* Featured badge */}
+        {isFeatured && (
+          <p className="text-xs text-gold font-semibold mb-2">⭐ Destacado</p>
+        )}
+
         {/* Header: name + registered badge */}
         <div className="flex items-start justify-between mb-3">
           <div>
@@ -78,7 +84,7 @@ export function ServiceiroCard({ serviceiro }: ServiceiroCardProps) {
                   : 'text-text-muted/30'
               }`}
             >
-              {day.charAt(0).toUpperCase()}
+              {t(`avail_${day}` as Parameters<typeof t>[0])}
             </span>
           ))}
         </div>
