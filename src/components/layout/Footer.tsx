@@ -6,6 +6,10 @@ export function Footer() {
         <p className="mt-1 text-xs">
           Tibia é marca registrada da CipSoft GmbH. Todos os nomes de vocação e itens pertencem aos seus respectivos donos.
         </p>
+        <div className="flex gap-4 mt-4 justify-center">
+          <a href="/termos" className="text-text-muted hover:text-gold transition-colors text-xs">Termos de Uso</a>
+          <a href="/privacidade" className="text-text-muted hover:text-gold transition-colors text-xs">Privacidade</a>
+        </div>
       </div>
     </footer>
   )
