@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/Card'
 import { VOCATIONS, GAMEPLAY_TYPES, WEEKDAYS } from '@/lib/constants'
 import type { Profile } from '@/lib/types'
 import { useLanguage } from '@/lib/language-context'
+import { CharacterVerificationCard } from '@/components/serviceiro/CharacterVerificationCard'
 
 interface DashboardClientProps {
   profile: Profile
@@ -237,6 +238,8 @@ export function DashboardClient({ profile, serviceiroProfile, userId }: Dashboar
               </select>
             </div>
           </Card>
+
+          <CharacterVerificationCard />
         </>
       )}
 

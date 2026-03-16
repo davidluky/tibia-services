@@ -94,6 +94,13 @@ export default async function ServiceiroProfilePage({ params }: PageProps) {
             {profile.bio && (
               <p className="text-text-muted text-sm leading-relaxed">{profile.bio}</p>
             )}
+            {sp.tibia_char_verified && sp.tibia_character && (
+              <p className="text-sm text-text-muted mt-2">
+                Personagem:{' '}
+                <span className="text-text-primary font-medium">{sp.tibia_character}</span>{' '}
+                <span className="text-status-success text-xs">✓ verificado</span>
+              </p>
+            )}
           </Card>
 
           {/* Vocations */}
