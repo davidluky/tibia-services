@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { isValidTC } from '@/lib/utils'
+import {
+  sendBookingAccepted,
+  sendBookingDeclined,
+  sendBookingCompleted,
+  sendBookingCancelled,
+} from '@/lib/email'
 
 export async function GET(
   _request: NextRequest,
@@ -66,6 +72,15 @@ export async function PATCH(
   const body = await request.json()
   const { action, price_tc } = body
 
+  // Fetch display names for both participants (profiles are publicly readable)
+  const { data: participantProfiles } = await supabase
+    .from('profiles')
+    .select('id, display_name')
+    .in('id', [booking.customer_id, booking.serviceiro_id])
+
+  const customerName = participantProfiles?.find(p => p.id === booking.customer_id)?.display_name ?? 'Cliente'
+  const serviceiroName = participantProfiles?.find(p => p.id === booking.serviceiro_id)?.display_name ?? 'Serviceiro'
+
   let update: Record<string, unknown> = {}
 
   switch (action) {
@@ -73,27 +88,32 @@ export async function PATCH(
       if (!isServiceiro) return NextResponse.json({ error: 'Somente o serviceiro pode aceitar.' }, { status: 403 })
       if (booking.status !== 'pending') return NextResponse.json({ error: 'Reserva não está pendente.' }, { status: 400 })
       update = { status: 'active' }
+      sendBookingAccepted({ bookingId: params.id, customerId: booking.customer_id, serviceiroName, serviceType: booking.service_type })
       break
 
     case 'decline':
       if (!isServiceiro) return NextResponse.json({ error: 'Somente o serviceiro pode recusar.' }, { status: 403 })
       if (booking.status !== 'pending') return NextResponse.json({ error: 'Reserva não está pendente.' }, { status: 400 })
       update = { status: 'declined' }
+      sendBookingDeclined({ bookingId: params.id, customerId: booking.customer_id, serviceiroName, serviceType: booking.service_type })
       break
 
-    case 'cancel':
+    case 'cancel': {
       if (booking.status !== 'active' && booking.status !== 'pending') {
         return NextResponse.json({ error: 'Não é possível cancelar esta reserva.' }, { status: 400 })
       }
       update = { status: 'cancelled' }
+      const recipientId = isCustomer ? booking.serviceiro_id : booking.customer_id
+      const cancellerName = isCustomer ? customerName : serviceiroName
+      sendBookingCancelled({ bookingId: params.id, recipientId, cancellerName, serviceType: booking.service_type })
       break
+    }
 
     case 'set_price':
       if (!price_tc || !isValidTC(price_tc)) {
         return NextResponse.json({ error: 'Preço inválido. Deve ser múltiplo de 25 TC.' }, { status: 400 })
       }
       if (booking.status !== 'active') return NextResponse.json({ error: 'Reserva não está ativa.' }, { status: 400 })
-      // Setting a new price resets confirmations
       update = {
         agreed_price_tc: price_tc,
         price_confirmed_by_customer: isCustomer,
@@ -123,7 +143,6 @@ export async function PATCH(
       if (isCustomer) update = { complete_by_customer: true }
       else update = { complete_by_serviceiro: true }
 
-      // Check if both will be marked after this update
       const willBothComplete =
         (isCustomer && booking.complete_by_serviceiro) ||
         (isServiceiro && booking.complete_by_customer)
@@ -131,6 +150,7 @@ export async function PATCH(
       if (willBothComplete) {
         update.status = 'completed'
         update.completed_at = new Date().toISOString()
+        sendBookingCompleted({ bookingId: params.id, customerId: booking.customer_id, serviceiroName })
       }
       break
     }
