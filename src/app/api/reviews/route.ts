@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sanitizeText } from '@/lib/utils'
 
 export async function POST(request: NextRequest) {
   const supabase = createClient()
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
       reviewer_id: user.id,
       serviceiro_id,
       rating,
-      comment: comment?.trim() || null,
+      comment: comment ? sanitizeText(comment as string) : null,
     })
     .select('id')
     .single()

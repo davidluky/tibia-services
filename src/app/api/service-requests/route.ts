@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { isValidTC } from '@/lib/utils'
+import { isValidTC, sanitizeText } from '@/lib/utils'
 
 const VALID_SERVICE_TYPES = [
   'hunt_x1', 'hunt_x2', 'hunt_x3plus', 'quests', 'ks_pk', 'bestiary',
@@ -86,8 +86,8 @@ export async function POST(request: Request) {
     .insert({
       customer_id: user.id,
       service_type,
-      title: title.trim(),
-      description: description && typeof description === 'string' ? description.trim() || null : null,
+      title: sanitizeText(title),
+      description: description && typeof description === 'string' ? sanitizeText(description) || null : null,
       flexible_time,
       preferred_date: flexible_time ? null : (preferred_date as string),
       preferred_time: flexible_time ? null : (typeof preferred_time === 'string' ? preferred_time : null),
