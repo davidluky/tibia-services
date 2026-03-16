@@ -1,0 +1,94 @@
+<h2>Serviceiro Stats — Layout Options</h2>
+<p class="subtitle">Where and how should stats appear on the serviceiro profile page?</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Stat bar below the header</h3>
+      <p>A horizontal row of numbers directly under the serviceiro's name — compact, always visible</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Profile Header</div>
+        <div class="mockup-body" style="padding:12px">
+          <div style="font-weight:bold;margin-bottom:4px">⚔ KnightBR</div>
+          <div style="font-size:11px;color:#aaa;margin-bottom:10px">Paladin · Verified</div>
+          <div style="display:flex;gap:24px;border-top:1px solid #333;padding-top:10px;border-bottom:1px solid #333;padding-bottom:10px">
+            <div style="text-align:center">
+              <div style="font-size:18px;font-weight:bold;color:#f0a500">47</div>
+              <div style="font-size:10px;color:#aaa">serviços feitos</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:18px;font-weight:bold;color:#f0a500">4.8★</div>
+              <div style="font-size:10px;color:#aaa">avaliação</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:18px;font-weight:bold;color:#f0a500">8 meses</div>
+              <div style="font-size:10px;color:#aaa">na plataforma</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:18px;font-weight:bold;color:#f0a500">12</div>
+              <div style="font-size:10px;color:#aaa">avaliações</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#aaa;margin-top:10px">Bio text, availability grid...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Stat cards in a dedicated section</h3>
+      <p>A "Stats" section further down the page with larger, more detailed cards — more space, more info</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Profile Page</div>
+        <div class="mockup-body" style="padding:12px">
+          <div style="font-weight:bold;margin-bottom:4px">⚔ KnightBR</div>
+          <div style="font-size:11px;color:#aaa;margin-bottom:10px">Bio, availability grid, reviews...</div>
+          <div style="font-size:12px;font-weight:bold;color:#aaa;margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Estatísticas</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:22px;font-weight:bold;color:#f0a500">47</div>
+              <div style="font-size:10px;color:#aaa">serviços concluídos</div>
+            </div>
+            <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:22px;font-weight:bold;color:#f0a500">4.8 ★</div>
+              <div style="font-size:10px;color:#aaa">média de avaliação</div>
+            </div>
+            <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:22px;font-weight:bold;color:#f0a500">8 meses</div>
+              <div style="font-size:10px;color:#aaa">na plataforma</div>
+            </div>
+            <div style="background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;text-align:center">
+              <div style="font-size:22px;font-weight:bold;color:#f0a500">12</div>
+              <div style="font-size:10px;color:#aaa">avaliações recebidas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Both — mini bar + full section</h3>
+      <p>Quick numbers under the name, plus a detailed stats section lower on the page with breakdowns per service type</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Profile Page</div>
+        <div class="mockup-body" style="padding:12px">
+          <div style="font-weight:bold;margin-bottom:2px">⚔ KnightBR</div>
+          <div style="font-size:10px;color:#f0a500;margin-bottom:8px">47 serviços · 4.8★ · 8 meses</div>
+          <div style="font-size:11px;color:#aaa;margin-bottom:10px">Bio, availability, reviews...</div>
+          <div style="font-size:12px;font-weight:bold;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Detalhes por serviço</div>
+          <div style="font-size:10px;color:#aaa">
+            <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #2a2a2a">Hunt x1 <span style="color:#f0a500">23 feitos</span></div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #2a2a2a">Quests <span style="color:#f0a500">15 feitos</span></div>
+            <div style="display:flex;justify-content:space-between;padding:4px 0">Bestiary <span style="color:#f0a500">9 feitos</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,3 @@
+{"type":"server-started","port":49729,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:49729","screen_dir":"C:\\Users\\david\\OneDrive\\Desktop\\Programas\\tibia-services/.superpowers/brainstorm/1856-1773630799"}
+{"type":"screen-added","file":"C:\\Users\\david\\OneDrive\\Desktop\\Programas\\tibia-services\\.superpowers\\brainstorm\\1856-1773630799\\welcome.html"}
+{"type":"server-stopped","reason":"owner process exited"}
