@@ -7,6 +7,7 @@ import { timeAgo, formatTC, sanitizeText } from '@/lib/utils'
 import { GAMEPLAY_TYPES } from '@/lib/constants'
 import type { Booking, Message, Dispute } from '@/lib/types'
 import { useLanguage } from '@/lib/language-context'
+import { createClient } from '@/lib/supabase/client'
 
 interface BookingThreadProps {
   booking: Booking
@@ -27,6 +28,7 @@ const STATUS_VARIANTS: Record<string, string> = {
 
 export function BookingThread({ booking: initialBooking, currentUserId, currentUserRole, dispute }: BookingThreadProps) {
   const { t } = useLanguage()
+  const supabase = createClient()
   const [booking, setBooking] = useState(initialBooking)
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
@@ -62,10 +64,32 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
 
   useEffect(() => {
     fetchMessages()
-    // Poll every 30 seconds
-    const interval = setInterval(fetchMessages, 30000)
-    return () => clearInterval(interval)
-  }, [fetchMessages])
+
+    const channel = supabase
+      .channel(`booking-messages-${booking.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `booking_id=eq.${booking.id}`,
+        },
+        (payload) => {
+          setMessages(prev => {
+            const newMsg = payload.new as unknown as Message
+            if (prev.some(m => m.id === newMsg.id)) return prev
+            return [...prev, newMsg]
+          })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booking.id])
 
   const sendMessage = async () => {
     if (!newMessage.trim()) return
