@@ -14,6 +14,32 @@ interface PageProps {
   params: { id: string }
 }
 
+export async function generateMetadata({ params }: PageProps) {
+  const supabase = createClient()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('display_name, bio')
+    .eq('id', params.id)
+    .eq('role', 'serviceiro')
+    .single()
+
+  if (!profile) return {}
+
+  const title = `${profile.display_name} — Tibia Services`
+  const description = profile.bio
+    ? profile.bio.slice(0, 155)
+    : `Contrate ${profile.display_name} para hunts, quests e mais no Tibia.`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+    },
+  }
+}
+
 export default async function ServiceiroProfilePage({ params }: PageProps) {
   const supabase = createClient()
 
