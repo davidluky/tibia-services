@@ -82,20 +82,21 @@ export async function PATCH(
   const serviceiroName = participantProfiles?.find(p => p.id === booking.serviceiro_id)?.display_name ?? 'Serviceiro'
 
   let update: Record<string, unknown> = {}
+  let pendingEmail: (() => void) | null = null
 
   switch (action) {
     case 'accept':
       if (!isServiceiro) return NextResponse.json({ error: 'Somente o serviceiro pode aceitar.' }, { status: 403 })
       if (booking.status !== 'pending') return NextResponse.json({ error: 'Reserva não está pendente.' }, { status: 400 })
       update = { status: 'active' }
-      sendBookingAccepted({ bookingId: params.id, customerId: booking.customer_id, serviceiroName, serviceType: booking.service_type })
+      pendingEmail = () => sendBookingAccepted({ bookingId: params.id, customerId: booking.customer_id, serviceiroName, serviceType: booking.service_type })
       break
 
     case 'decline':
       if (!isServiceiro) return NextResponse.json({ error: 'Somente o serviceiro pode recusar.' }, { status: 403 })
       if (booking.status !== 'pending') return NextResponse.json({ error: 'Reserva não está pendente.' }, { status: 400 })
       update = { status: 'declined' }
-      sendBookingDeclined({ bookingId: params.id, customerId: booking.customer_id, serviceiroName, serviceType: booking.service_type })
+      pendingEmail = () => sendBookingDeclined({ bookingId: params.id, customerId: booking.customer_id, serviceiroName, serviceType: booking.service_type })
       break
 
     case 'cancel': {
@@ -105,7 +106,7 @@ export async function PATCH(
       update = { status: 'cancelled' }
       const recipientId = isCustomer ? booking.serviceiro_id : booking.customer_id
       const cancellerName = isCustomer ? customerName : serviceiroName
-      sendBookingCancelled({ bookingId: params.id, recipientId, cancellerName, serviceType: booking.service_type })
+      pendingEmail = () => sendBookingCancelled({ bookingId: params.id, recipientId, cancellerName, serviceType: booking.service_type })
       break
     }
 
@@ -150,7 +151,7 @@ export async function PATCH(
       if (willBothComplete) {
         update.status = 'completed'
         update.completed_at = new Date().toISOString()
-        sendBookingCompleted({ bookingId: params.id, customerId: booking.customer_id, serviceiroName })
+        pendingEmail = () => sendBookingCompleted({ bookingId: params.id, customerId: booking.customer_id, serviceiroName })
       }
       break
     }
@@ -167,6 +168,8 @@ export async function PATCH(
   if (error) {
     return NextResponse.json({ error: 'Erro ao atualizar reserva.' }, { status: 500 })
   }
+
+  pendingEmail?.()
 
   return NextResponse.json({ success: true })
 }

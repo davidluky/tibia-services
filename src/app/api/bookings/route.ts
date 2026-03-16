@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
   sendBookingCreated({
     bookingId: booking.id,
     serviceiroId: serviceiro_id,
-    customerName: profile.display_name,
+    customerName: profile.display_name ?? 'Cliente',
     serviceType: service_type,
   })
 
