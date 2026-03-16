@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { timeAgo, formatTC } from '@/lib/utils'
 import { GAMEPLAY_TYPES } from '@/lib/constants'
-import type { Booking, Message } from '@/lib/types'
+import type { Booking, Message, Dispute } from '@/lib/types'
 import { useLanguage } from '@/lib/language-context'
 
 interface BookingThreadProps {
   booking: Booking
   currentUserId: string
   currentUserRole: string
+  dispute?: Dispute
 }
 
 const STATUS_VARIANTS: Record<string, string> = {
@@ -20,9 +21,11 @@ const STATUS_VARIANTS: Record<string, string> = {
   completed: 'bg-gold/10 text-gold border border-gold/20',
   declined: 'bg-status-error/10 text-status-error border border-status-error/20',
   cancelled: 'bg-text-muted/10 text-text-muted border border-border',
+  disputed: 'bg-status-warning/10 text-status-warning border border-status-warning/30',
+  resolved: 'bg-border/50 text-text-muted border border-border',
 }
 
-export function BookingThread({ booking: initialBooking, currentUserId, currentUserRole }: BookingThreadProps) {
+export function BookingThread({ booking: initialBooking, currentUserId, currentUserRole, dispute }: BookingThreadProps) {
   const { t } = useLanguage()
   const [booking, setBooking] = useState(initialBooking)
   const [messages, setMessages] = useState<Message[]>([])
@@ -31,6 +34,10 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [priceInput, setPriceInput] = useState('')
   const [error, setError] = useState('')
+  const [showDisputeForm, setShowDisputeForm] = useState(false)
+  const [disputeReason, setDisputeReason] = useState('')
+  const [disputeLoading, setDisputeLoading] = useState(false)
+  const [disputeError, setDisputeError] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const isCustomer = currentUserId === booking.customer_id
@@ -100,6 +107,29 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
       await fetchBooking()
     }
     setActionLoading(null)
+  }
+
+  const submitDispute = async () => {
+    if (disputeReason.length < 10 || disputeReason.length > 500) {
+      setDisputeError('O motivo deve ter entre 10 e 500 caracteres.')
+      return
+    }
+    setDisputeLoading(true)
+    setDisputeError('')
+
+    const res = await fetch('/api/disputes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_id: booking.id, reason: disputeReason }),
+    })
+
+    if (res.ok) {
+      window.location.reload()
+    } else {
+      const data = await res.json()
+      setDisputeError(data.error ?? 'Erro ao abrir disputa.')
+      setDisputeLoading(false)
+    }
   }
 
   const serviceType = GAMEPLAY_TYPES.find(g => g.key === booking.service_type)
@@ -185,6 +215,28 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
             </div>
           )}
         </Card>
+
+        {/* Disputed state card */}
+        {booking.status === 'disputed' && dispute && (
+          <Card className="p-4 border border-status-warning/30 bg-status-warning/5">
+            <h3 className="text-sm font-semibold text-status-warning mb-2">Esta reserva está em disputa</h3>
+            <p className="text-sm text-text-primary mb-1">
+              <span className="text-text-muted">Motivo: </span>{dispute.reason}
+            </p>
+            <p className="text-xs text-text-muted">
+              Aberta por <span className="text-text-primary">{dispute.opener?.display_name ?? 'participante'}</span>
+            </p>
+            <p className="text-xs text-text-muted mt-2">Aguardando resolução do admin.</p>
+          </Card>
+        )}
+
+        {/* Resolved state card */}
+        {booking.status === 'resolved' && dispute && (
+          <Card className="p-4 border border-border bg-border/10">
+            <h3 className="text-sm font-semibold text-text-muted mb-2">Disputa resolvida</h3>
+            <p className="text-sm text-text-primary">{dispute.resolution ?? ''}</p>
+          </Card>
+        )}
       </div>
 
       {/* Sidebar: actions */}
@@ -346,6 +398,58 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
           >
             {t('booking_cancel')}
           </Button>
+        )}
+
+        {/* Dispute form (only when active) */}
+        {booking.status === 'active' && (
+          <div>
+            {!showDisputeForm ? (
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={() => setShowDisputeForm(true)}
+                className="w-full"
+              >
+                Abrir Disputa
+              </Button>
+            ) : (
+              <Card className="p-4 space-y-3">
+                <h3 className="text-sm font-semibold text-status-warning">Abrir Disputa</h3>
+                <textarea
+                  value={disputeReason}
+                  onChange={e => setDisputeReason(e.target.value)}
+                  placeholder="Descreva o motivo da disputa (10–500 caracteres)"
+                  rows={4}
+                  minLength={10}
+                  maxLength={500}
+                  className="w-full bg-bg-primary border border-border rounded-md px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-status-warning resize-none"
+                />
+                <p className="text-xs text-text-muted text-right">{disputeReason.length}/500</p>
+                {disputeError && (
+                  <p className="text-status-error text-xs">{disputeError}</p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={submitDispute}
+                    loading={disputeLoading}
+                    className="flex-1"
+                  >
+                    Confirmar Disputa
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setShowDisputeForm(false); setDisputeReason(''); setDisputeError('') }}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              </Card>
+            )}
+          </div>
         )}
       </div>
     </div>
