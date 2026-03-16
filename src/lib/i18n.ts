@@ -199,6 +199,11 @@ const translations = {
     avail_legend_available: 'Disponível',
     avail_legend_busy: 'Ocupado',
     avail_legend_off: 'Folga',
+    avail_summary_days_all: 'Todos os dias',
+    avail_summary_days_none: 'Sem disponibilidade',
+    avail_summary_hours_any: 'horário flexível',
+    avail_summary_hours_range: 'das {from} às {to}',
+    avail_summary_timezone: 'UTC{offset}',
 
     // Home page
     home_badge: 'Marketplace de Tibia Services',
@@ -457,6 +462,11 @@ const translations = {
     avail_legend_available: 'Available',
     avail_legend_busy: 'Busy',
     avail_legend_off: 'Day off',
+    avail_summary_days_all: 'Every day',
+    avail_summary_days_none: 'No availability set',
+    avail_summary_hours_any: 'flexible hours',
+    avail_summary_hours_range: '{from} to {to}',
+    avail_summary_timezone: 'UTC{offset}',
 
     // Home page
     home_badge: 'Tibia Services Marketplace',
@@ -715,6 +725,11 @@ const translations = {
     avail_legend_available: 'Disponible',
     avail_legend_busy: 'Ocupado',
     avail_legend_off: 'Libre',
+    avail_summary_days_all: 'Todos los días',
+    avail_summary_days_none: 'Sin disponibilidad',
+    avail_summary_hours_any: 'horario flexible',
+    avail_summary_hours_range: 'de {from} a {to}',
+    avail_summary_timezone: 'UTC{offset}',
 
     // Home page
     home_badge: 'Marketplace de Tibia Services',
