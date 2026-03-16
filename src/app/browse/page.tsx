@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { BrowseClient } from './BrowseClient'
 import type { ServiceiroWithProfile } from '@/lib/types'
 import type { GameplayTypeKey } from '@/lib/constants'
@@ -48,11 +49,38 @@ async function getAllServiceiros(): Promise<ServiceiroWithProfile[]> {
     })
   )
 
-  // Sort: registered first, then by rating
-  return results.sort((a, b) => {
-    if (a.is_registered !== b.is_registered) return a.is_registered ? -1 : 1
-    return (b.avg_rating ?? 0) - (a.avg_rating ?? 0)
-  })
+  // Fetch currently active featured listings (bypasses RLS — public browse page)
+  const adminClient = createAdminClient()
+  const { data: featuredRows } = await adminClient
+    .from('featured_listings')
+    .select('serviceiro_id, expires_at')
+    .eq('status', 'active')
+    .gt('expires_at', new Date().toISOString())
+
+  const featuredMap = new Map(featuredRows?.map(f => [f.serviceiro_id, f.expires_at as string]) ?? [])
+
+  // Attach featured_until to each serviceiro
+  const enriched = results.map(s => ({
+    ...s,
+    featured_until: featuredMap.get(s.id) ?? null,
+  }))
+
+  // Sort: featured first (by avg_rating DESC, created_at DESC), then non-featured (is_registered DESC, avg_rating DESC)
+  const featured = enriched
+    .filter(s => s.featured_until !== null)
+    .sort((a, b) =>
+      (b.avg_rating ?? 0) - (a.avg_rating ?? 0) ||
+      new Date(b.profile.created_at).getTime() - new Date(a.profile.created_at).getTime()
+    )
+
+  const nonFeatured = enriched
+    .filter(s => s.featured_until === null)
+    .sort((a, b) => {
+      if (a.is_registered !== b.is_registered) return a.is_registered ? -1 : 1
+      return (b.avg_rating ?? 0) - (a.avg_rating ?? 0)
+    })
+
+  return [...featured, ...nonFeatured]
 }
 
 export default async function BrowsePage() {

@@ -84,7 +84,11 @@ export function BrowseClient({ serviceiros }: BrowseClientProps) {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtered.map(s => (
-                <ServiceiroCard key={s.id} serviceiro={s} />
+                <ServiceiroCard
+                  key={s.id}
+                  serviceiro={s}
+                  isFeatured={s.featured_until !== null && new Date(s.featured_until) > new Date()}
+                />
               ))}
             </div>
           )}
