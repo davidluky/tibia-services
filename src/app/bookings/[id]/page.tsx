@@ -44,6 +44,15 @@ export default async function BookingDetailPage({ params }: PageProps) {
     .eq('booking_id', params.id)
     .single()
 
+  // Fetch dispute if booking is disputed or resolved
+  const { data: dispute } = booking.status === 'disputed' || booking.status === 'resolved'
+    ? await supabase
+        .from('disputes')
+        .select('*, opener:profiles!opened_by(display_name)')
+        .eq('booking_id', params.id)
+        .single()
+    : { data: null }
+
   const canReview =
     booking.status === 'completed' &&
     booking.customer_id === user.id &&
@@ -55,6 +64,7 @@ export default async function BookingDetailPage({ params }: PageProps) {
         booking={booking}
         currentUserId={user.id}
         currentUserRole={profile?.role ?? 'customer'}
+        dispute={dispute ?? undefined}
       />
 
       {canReview && (
