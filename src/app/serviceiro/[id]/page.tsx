@@ -148,6 +148,12 @@ export default async function ServiceiroProfilePage({ params }: PageProps) {
 
           {/* Availability */}
           <Card className="p-6">
+            <AvailabilitySummary
+              availableWeekdays={sp.available_weekdays ?? []}
+              availableFrom={sp.available_from}
+              availableTo={sp.available_to}
+              timezoneOffset={sp.timezone_offset ?? -3}
+            />
             <AvailabilityGrid
               availableWeekdays={sp.available_weekdays ?? []}
               availableFrom={sp.available_from}
@@ -227,6 +233,7 @@ function BookNowSection({ serviceiroId, serviceiroName, gameplayTypes }: {
 
 // Separate client component
 import { BookNowForm } from './BookNowForm'
+import { AvailabilitySummary } from '@/components/serviceiro/AvailabilitySummary'
 import { AvailabilityGrid } from '@/components/serviceiro/AvailabilityGrid'
 import { ServiceiroStats } from '@/components/serviceiro/ServiceiroStats'
 import { ServiceiroSummaryLine } from '@/components/serviceiro/ServiceiroSummaryLine'
