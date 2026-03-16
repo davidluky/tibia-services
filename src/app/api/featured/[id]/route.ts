@@ -28,7 +28,12 @@ export async function DELETE(
     return NextResponse.json({ error: 'Apenas pedidos pendentes podem ser cancelados.' }, { status: 409 })
   }
 
-  await admin.from('featured_listings').update({ status: 'canceled' }).eq('id', params.id)
+  const { error: updateError } = await admin.from('featured_listings').update({ status: 'canceled' }).eq('id', params.id)
+
+  if (updateError) {
+    console.error('[featured] Failed to cancel listing:', updateError)
+    return NextResponse.json({ error: 'Erro ao cancelar pedido.' }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true })
 }

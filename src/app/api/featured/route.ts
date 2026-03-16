@@ -45,7 +45,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
   }
 
-  const body = await request.json()
+  let body: Record<string, unknown>
+  try {
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'JSON inválido.' }, { status: 400 })
+  }
   const { tc_amount } = body
 
   if (
