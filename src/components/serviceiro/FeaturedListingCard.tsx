@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import toast from 'react-hot-toast'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import type { FeaturedListing } from '@/lib/types'
@@ -72,6 +73,7 @@ export function FeaturedListingCard() {
         return
       }
       fetchListing()
+      toast.success('Pedido criado! Envie os TCs para Cursos Senai.')
     } catch {
       setError('Erro de conexão. Tente novamente.')
     }
@@ -87,6 +89,7 @@ export function FeaturedListingCard() {
       // Treat 404 and 409 as success (listing already gone or inactive)
       if (res.ok || res.status === 404 || res.status === 409) {
         setListing(null)
+        toast.success('Pedido cancelado.')
       } else {
         let data: { error?: string } = {}
         try {
