@@ -287,6 +287,12 @@ const translations = {
     stats_member_for: 'membro há',
     stats_by_type: 'Por tipo de serviço',
     stats_completed_each: 'concluídos',
+    booking_disputed_title: 'Esta reserva está em disputa',
+    booking_disputed_reason: 'Motivo:',
+    booking_disputed_opened_by: 'Aberta por',
+    booking_disputed_waiting: 'Aguardando resolução do admin.',
+    booking_resolved_title: 'Disputa resolvida',
+    booking_participant_fallback: 'participante',
   },
 
   en: {
@@ -550,6 +556,12 @@ const translations = {
     stats_member_for: 'member for',
     stats_by_type: 'By service type',
     stats_completed_each: 'completed',
+    booking_disputed_title: 'This booking is under dispute',
+    booking_disputed_reason: 'Reason:',
+    booking_disputed_opened_by: 'Opened by',
+    booking_disputed_waiting: 'Waiting for admin resolution.',
+    booking_resolved_title: 'Dispute resolved',
+    booking_participant_fallback: 'participant',
   },
 
   es: {
@@ -813,6 +825,12 @@ const translations = {
     stats_member_for: 'miembro hace',
     stats_by_type: 'Por tipo de servicio',
     stats_completed_each: 'completados',
+    booking_disputed_title: 'Esta reserva está en disputa',
+    booking_disputed_reason: 'Motivo:',
+    booking_disputed_opened_by: 'Abierta por',
+    booking_disputed_waiting: 'Esperando resolución del admin.',
+    booking_resolved_title: 'Disputa resuelta',
+    booking_participant_fallback: 'participante',
   },
 }
 
