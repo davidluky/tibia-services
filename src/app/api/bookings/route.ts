@@ -52,6 +52,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Serviceiro não encontrado.' }, { status: 404 })
   }
 
+  // Rate limit: max 3 booking requests per minute per user
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString()
+  const { count: recentBookings } = await supabase
+    .from('bookings')
+    .select('*', { count: 'exact', head: true })
+    .eq('customer_id', user.id)
+    .gt('created_at', oneMinuteAgo)
+
+  if ((recentBookings ?? 0) >= 3) {
+    return NextResponse.json(
+      { error: 'Muitas solicitações. Aguarde um momento antes de tentar novamente.' },
+      { status: 429 }
+    )
+  }
+
   // Create the booking
   const { data: booking, error } = await supabase
     .from('bookings')
