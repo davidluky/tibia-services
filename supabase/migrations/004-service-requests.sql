@@ -20,11 +20,14 @@ CREATE INDEX IF NOT EXISTS idx_service_requests_customer ON service_requests (cu
 
 ALTER TABLE service_requests ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "service_requests_public_read" ON service_requests
+DROP POLICY IF EXISTS "service_requests_public_read" ON service_requests;
+CREATE POLICY "service_requests_public_read" ON service_requests
   FOR SELECT USING (status = 'open');
 
-CREATE POLICY IF NOT EXISTS "service_requests_own_insert" ON service_requests
+DROP POLICY IF EXISTS "service_requests_own_insert" ON service_requests;
+CREATE POLICY "service_requests_own_insert" ON service_requests
   FOR INSERT WITH CHECK (auth.uid() = customer_id);
 
-CREATE POLICY IF NOT EXISTS "service_requests_own_update" ON service_requests
+DROP POLICY IF EXISTS "service_requests_own_update" ON service_requests;
+CREATE POLICY "service_requests_own_update" ON service_requests
   FOR UPDATE USING (auth.uid() = customer_id);
