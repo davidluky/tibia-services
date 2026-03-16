@@ -26,6 +26,8 @@ export interface ServiceiroProfile {
   timezone_offset: number          // hours from UTC (e.g. -3 for BRT)
   is_registered: boolean
   registered_at: string | null
+  tibia_character: string | null
+  tibia_char_verified: boolean
 }
 
 // Combined type used in most UI components
