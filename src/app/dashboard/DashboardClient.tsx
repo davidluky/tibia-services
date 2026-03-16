@@ -9,6 +9,7 @@ import { VOCATIONS, GAMEPLAY_TYPES, WEEKDAYS } from '@/lib/constants'
 import type { Profile } from '@/lib/types'
 import { useLanguage } from '@/lib/language-context'
 import { CharacterVerificationCard } from '@/components/serviceiro/CharacterVerificationCard'
+import { FeaturedListingCard } from '@/components/serviceiro/FeaturedListingCard'
 
 interface DashboardClientProps {
   profile: Profile
@@ -240,6 +241,7 @@ export function DashboardClient({ profile, serviceiroProfile, userId }: Dashboar
           </Card>
 
           <CharacterVerificationCard />
+          <FeaturedListingCard />
         </>
       )}
 
