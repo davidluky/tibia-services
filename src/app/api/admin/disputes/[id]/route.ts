@@ -41,12 +41,17 @@ export async function PATCH(
     return NextResponse.json({ error: 'Disputa já foi resolvida.' }, { status: 409 })
   }
 
-  await admin.from('disputes').update({
+  const { error: disputeUpdateError } = await admin.from('disputes').update({
     status: 'resolved',
     resolution,
     resolved_by: user.id,
     resolved_at: new Date().toISOString(),
   }).eq('id', params.id)
+
+  if (disputeUpdateError) {
+    console.error('[disputes] Failed to resolve dispute:', disputeUpdateError)
+    return NextResponse.json({ error: 'Erro ao resolver disputa.' }, { status: 500 })
+  }
 
   const { error: bookingError } = await admin
     .from('bookings')

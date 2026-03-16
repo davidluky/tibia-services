@@ -115,10 +115,15 @@ export async function POST(request: Request) {
   }
 
   // Update with verified character name (use API-normalized name)
-  await admin.from('serviceiro_profiles').update({
+  const { error: updateError } = await admin.from('serviceiro_profiles').update({
     tibia_character: characterData.name,
     tibia_char_verified: true,
   }).eq('id', user.id)
+
+  if (updateError) {
+    console.error('[verify-character] Failed to update profile:', updateError)
+    return NextResponse.json({ error: 'Erro ao salvar verificação. Tente novamente.' }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true, character_name: characterData.name })
 }
