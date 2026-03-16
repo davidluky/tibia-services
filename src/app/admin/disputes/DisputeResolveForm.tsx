@@ -18,19 +18,28 @@ export function DisputeResolveForm({ disputeId }: DisputeResolveFormProps) {
     }
     setLoading(true)
     setError('')
+    try {
+      const res = await fetch(`/api/admin/disputes/${disputeId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ resolution }),
+      })
 
-    const res = await fetch(`/api/admin/disputes/${disputeId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ resolution }),
-    })
-
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error ?? 'Erro ao resolver disputa.')
+      let data: { error?: string } = {}
+      try {
+        data = await res.json()
+      } catch {
+        // non-JSON response
+      }
+      if (!res.ok) {
+        setError(data.error ?? 'Erro ao resolver disputa.')
+      } else {
+        window.location.reload()
+      }
+    } catch {
+      setError('Erro de conexão. Tente novamente.')
+    } finally {
       setLoading(false)
-    } else {
-      window.location.reload()
     }
   }
 

@@ -13,15 +13,23 @@ export function FeaturedConfirmForm({ listingId }: FeaturedConfirmFormProps) {
   const handleConfirm = async () => {
     setLoading(true)
     setError('')
-
-    const res = await fetch(`/api/admin/featured/${listingId}`, { method: 'PATCH' })
-    const data = await res.json()
-
-    if (!res.ok) {
-      setError(data.error ?? 'Erro ao confirmar.')
+    try {
+      const res = await fetch(`/api/admin/featured/${listingId}`, { method: 'PATCH' })
+      let data: { error?: string } = {}
+      try {
+        data = await res.json()
+      } catch {
+        // non-JSON response
+      }
+      if (!res.ok) {
+        setError(data.error ?? 'Erro ao confirmar.')
+      } else {
+        window.location.reload()
+      }
+    } catch {
+      setError('Erro de conexão. Tente novamente.')
+    } finally {
       setLoading(false)
-    } else {
-      window.location.reload()
     }
   }
 
