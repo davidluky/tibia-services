@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card'
 import { useLanguage } from '@/lib/language-context'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { GAMEPLAY_TYPES } from '@/lib/constants'
+import { formatTC } from '@/lib/utils'
 
 interface AnalyticsData {
   totalCompleted: number
@@ -60,7 +61,7 @@ export function AnalyticsClient() {
           <p className="text-xs text-text-muted">{t('analytics_completed')}</p>
         </Card>
         <Card className="p-4 text-center">
-          <p className="text-2xl font-bold text-gold">{data.totalRevenue.toLocaleString('pt-BR')} TC</p>
+          <p className="text-2xl font-bold text-gold">{formatTC(data.totalRevenue)}</p>
           <p className="text-xs text-text-muted">{t('analytics_revenue')}</p>
         </Card>
         <Card className="p-4 text-center">
