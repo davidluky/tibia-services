@@ -14,6 +14,12 @@ import {
   badRequest,
   serverError,
 } from '@/lib/api-helpers'
+import { createAdminClient } from '@/lib/supabase/admin'
+
+async function notify(userId: string, type: string, title: string, body: string | null, link: string) {
+  const admin = createAdminClient()
+  await admin.from('notifications').insert({ user_id: userId, type, title, body, link })
+}
 
 export async function GET(
   _request: NextRequest,
@@ -76,6 +82,8 @@ export async function PATCH(
 
   let update: Record<string, unknown> = {}
   let pendingEmail: (() => void) | null = null
+  const pendingNotifications: (() => Promise<void>)[] = []
+  const bookingLink = `/bookings/${params.id}`
 
   switch (action) {
     case 'accept':
@@ -83,6 +91,7 @@ export async function PATCH(
       if (booking.status !== 'pending') return badRequest('Reserva não está pendente.')
       update = { status: 'active' }
       pendingEmail = () => sendBookingAccepted({ bookingId: params.id, customerId: booking.customer_id, serviceiroName, serviceType: booking.service_type })
+      pendingNotifications.push(() => notify(booking.customer_id, 'booking_accepted', 'Reserva aceita', 'O serviceiro aceitou sua reserva.', bookingLink))
       break
 
     case 'decline':
@@ -90,6 +99,7 @@ export async function PATCH(
       if (booking.status !== 'pending') return badRequest('Reserva não está pendente.')
       update = { status: 'declined' }
       pendingEmail = () => sendBookingDeclined({ bookingId: params.id, customerId: booking.customer_id, serviceiroName, serviceType: booking.service_type })
+      pendingNotifications.push(() => notify(booking.customer_id, 'booking_declined', 'Reserva recusada', 'O serviceiro recusou sua reserva.', bookingLink))
       break
 
     case 'cancel': {
@@ -100,6 +110,7 @@ export async function PATCH(
       const recipientId = isCustomer ? booking.serviceiro_id : booking.customer_id
       const cancellerName = isCustomer ? customerName : serviceiroName
       pendingEmail = () => sendBookingCancelled({ bookingId: params.id, recipientId, cancellerName, serviceType: booking.service_type })
+      pendingNotifications.push(() => notify(recipientId, 'booking_cancelled', 'Reserva cancelada', `${cancellerName} cancelou a reserva.`, bookingLink))
       break
     }
 
@@ -145,6 +156,10 @@ export async function PATCH(
         update.status = 'completed'
         update.completed_at = new Date().toISOString()
         pendingEmail = () => sendBookingCompleted({ bookingId: params.id, customerId: booking.customer_id, serviceiroName })
+        pendingNotifications.push(
+          () => notify(booking.customer_id, 'booking_completed', 'Reserva concluída', 'A reserva foi marcada como concluída.', bookingLink),
+          () => notify(booking.serviceiro_id, 'booking_completed', 'Reserva concluída', 'A reserva foi marcada como concluída.', bookingLink),
+        )
       }
       break
     }
@@ -161,6 +176,7 @@ export async function PATCH(
   if (error) return serverError('Erro ao atualizar reserva.')
 
   pendingEmail?.()
+  await Promise.all(pendingNotifications.map(fn => fn()))
 
   return NextResponse.json({ success: true })
 }

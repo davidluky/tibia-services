@@ -310,6 +310,24 @@ const translations = {
     admin_featured_confirm_error: 'Erro ao confirmar.',
     admin_featured_connection_error: 'Erro de conex\u00e3o. Tente novamente.',
     dashboard_save_toast_success: 'Perfil salvo com sucesso!',
+    error_generic: 'Algo deu errado.',
+    error_retry: 'Tentar novamente',
+
+    // Notifications
+    notif_bell_label: 'Notifica\u00e7\u00f5es',
+    notif_title: 'Notifica\u00e7\u00f5es',
+    notif_empty: 'Nenhuma notifica\u00e7\u00e3o.',
+
+    // Analytics
+    analytics_title: 'An\u00e1lise de desempenho',
+    analytics_back: '\u2190 Voltar ao dashboard',
+    analytics_completed: 'Servi\u00e7os conclu\u00eddos',
+    analytics_revenue: 'Receita total',
+    analytics_avg_rating: 'Avalia\u00e7\u00e3o m\u00e9dia',
+    analytics_reviews: 'Avalia\u00e7\u00f5es',
+    analytics_monthly: 'Servi\u00e7os por m\u00eas',
+    analytics_by_type: 'Por tipo de servi\u00e7o',
+    dashboard_analytics: 'Estat\u00edsticas \u2192',
   },
 
   en: {
@@ -596,6 +614,24 @@ const translations = {
     admin_featured_confirm_error: 'Error confirming.',
     admin_featured_connection_error: 'Connection error. Please try again.',
     dashboard_save_toast_success: 'Profile saved successfully!',
+    error_generic: 'Something went wrong.',
+    error_retry: 'Try again',
+
+    // Notifications
+    notif_bell_label: 'Notifications',
+    notif_title: 'Notifications',
+    notif_empty: 'No notifications.',
+
+    // Analytics
+    analytics_title: 'Performance Analytics',
+    analytics_back: '\u2190 Back to dashboard',
+    analytics_completed: 'Services completed',
+    analytics_revenue: 'Total revenue',
+    analytics_avg_rating: 'Avg. rating',
+    analytics_reviews: 'Reviews',
+    analytics_monthly: 'Services per month',
+    analytics_by_type: 'By service type',
+    dashboard_analytics: 'Analytics \u2192',
   },
 
   es: {
@@ -882,6 +918,24 @@ const translations = {
     admin_featured_confirm_error: 'Error al confirmar.',
     admin_featured_connection_error: 'Error de conexi\u00f3n. Int\u00e9ntalo de nuevo.',
     dashboard_save_toast_success: '\u00a1Perfil guardado con \u00e9xito!',
+    error_generic: 'Algo salió mal.',
+    error_retry: 'Intentar de nuevo',
+
+    // Notifications
+    notif_bell_label: 'Notificaciones',
+    notif_title: 'Notificaciones',
+    notif_empty: 'Sin notificaciones.',
+
+    // Analytics
+    analytics_title: 'An\u00e1lisis de rendimiento',
+    analytics_back: '\u2190 Volver al panel',
+    analytics_completed: 'Servicios completados',
+    analytics_revenue: 'Ingresos totales',
+    analytics_avg_rating: 'Calificaci\u00f3n promedio',
+    analytics_reviews: 'Rese\u00f1as',
+    analytics_monthly: 'Servicios por mes',
+    analytics_by_type: 'Por tipo de servicio',
+    dashboard_analytics: 'Estad\u00edsticas \u2192',
   },
 }
 

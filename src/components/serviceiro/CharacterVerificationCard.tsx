@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { ErrorRetry } from '@/components/ui/ErrorRetry'
 
 interface VerifyState {
   verification_code: string
@@ -16,17 +17,28 @@ export function CharacterVerificationCard() {
   const [characterName, setCharacterName] = useState('')
   const [verifying, setVerifying] = useState(false)
   const [error, setError] = useState('')
+  const [fetchError, setFetchError] = useState(false)
   const [success, setSuccess] = useState('')
   const [showForm, setShowForm] = useState(false)
 
-  useEffect(() => {
+  const fetchVerification = () => {
+    setFetchError(false)
+    setLoading(true)
     fetch('/api/verify-character')
       .then(r => r.json())
       .then(data => {
         setState(data)
+        setFetchError(false)
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch(() => {
+        setFetchError(true)
+        setLoading(false)
+      })
+  }
+
+  useEffect(() => {
+    fetchVerification()
   }, [])
 
   const handleVerify = async () => {
@@ -58,6 +70,14 @@ export function CharacterVerificationCard() {
     return (
       <Card className="p-6">
         <p className="text-sm text-text-muted">Carregando...</p>
+      </Card>
+    )
+  }
+
+  if (fetchError) {
+    return (
+      <Card className="p-6">
+        <ErrorRetry onRetry={fetchVerification} />
       </Card>
     )
   }

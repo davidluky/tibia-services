@@ -1,0 +1,34 @@
+import { NextRequest } from 'next/server'
+import { getAuthUser, unauthorized, badRequest } from '@/lib/api-helpers'
+
+export async function GET() {
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
+
+  const { data } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  return Response.json(data ?? [])
+}
+
+export async function PATCH(request: NextRequest) {
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
+
+  const body = await request.json()
+  const { ids } = body
+
+  if (!Array.isArray(ids) || ids.length === 0) return badRequest('Missing notification ids')
+
+  await supabase
+    .from('notifications')
+    .update({ is_read: true })
+    .in('id', ids)
+    .eq('user_id', user.id)
+
+  return Response.json({ ok: true })
+}
