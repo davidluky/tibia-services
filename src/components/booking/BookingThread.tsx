@@ -8,6 +8,7 @@ import { GAMEPLAY_TYPES } from '@/lib/constants'
 import type { Booking, Message, Dispute } from '@/lib/types'
 import { useLanguage } from '@/lib/language-context'
 import { createClient } from '@/lib/supabase/client'
+import { ErrorRetry } from '@/components/ui/ErrorRetry'
 
 interface BookingThreadProps {
   booking: Booking
@@ -40,17 +41,25 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
   const [disputeReason, setDisputeReason] = useState('')
   const [disputeLoading, setDisputeLoading] = useState(false)
   const [disputeError, setDisputeError] = useState('')
+  const [messageError, setMessageError] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const isCustomer = currentUserId === booking.customer_id
   const isServiceiro = currentUserId === booking.serviceiro_id
 
   const fetchMessages = useCallback(async () => {
-    const res = await fetch(`/api/messages?booking_id=${booking.id}`)
-    if (res.ok) {
-      const data = await res.json()
-      setMessages(data)
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+    try {
+      const res = await fetch(`/api/messages?booking_id=${booking.id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setMessages(data)
+        setMessageError(false)
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+      } else {
+        setMessageError(true)
+      }
+    } catch {
+      setMessageError(true)
     }
   }, [booking.id])
 
@@ -197,7 +206,9 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
         {/* Messages */}
         <Card className="flex flex-col h-96">
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.length === 0 ? (
+            {messageError ? (
+              <ErrorRetry onRetry={fetchMessages} />
+            ) : messages.length === 0 ? (
               <p className="text-text-muted text-sm text-center py-8">
                 {booking.status === 'pending'
                   ? t('booking_msg_pending')

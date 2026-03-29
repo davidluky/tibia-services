@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { useLanguage } from '@/lib/language-context'
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher'
+import { NotificationBell } from './NotificationBell'
 
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
@@ -49,6 +50,7 @@ export function Navbar() {
               <Link href="/bookings" className="text-text-muted hover:text-text-primary transition-colors text-sm">
                 {t('nav_bookings')}
               </Link>
+              <NotificationBell />
               <Link href="/dashboard" className="text-text-muted hover:text-text-primary transition-colors text-sm">
                 {t('nav_dashboard')}
               </Link>
@@ -98,6 +100,7 @@ export function Navbar() {
               <Link href="/bookings" className="text-text-muted hover:text-text-primary text-sm" onClick={() => setMenuOpen(false)}>
                 {t('nav_bookings')}
               </Link>
+              <NotificationBell />
               <Link href="/dashboard" className="text-text-muted hover:text-text-primary text-sm" onClick={() => setMenuOpen(false)}>
                 {t('nav_dashboard')}
               </Link>

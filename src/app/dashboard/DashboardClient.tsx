@@ -110,6 +110,11 @@ export function DashboardClient({ profile, serviceiroProfile, userId }: Dashboar
           <Link href="/bookings" className="text-gold hover:text-gold-bright text-sm transition-colors">
             {t('dashboard_my_bookings')}
           </Link>
+          {profile.role === 'serviceiro' && (
+            <Link href="/dashboard/analytics" className="text-gold hover:text-gold-bright text-sm transition-colors">
+              {t('dashboard_analytics')}
+            </Link>
+          )}
           {profile.role === 'serviceiro' && !serviceiroProfile?.is_registered && (
             <Link href="/dashboard/verification" className="text-blue-400 hover:text-blue-300 text-sm transition-colors">
               {t('dashboard_request_verification')}
