@@ -30,9 +30,10 @@ interface ServiceRequestsClientProps {
   isServiceiro: boolean
   isCustomer: boolean
   isLoggedIn: boolean
+  serviceiroGameplayTypes: string[]
 }
 
-export function ServiceRequestsClient({ requests, isServiceiro, isCustomer, isLoggedIn }: ServiceRequestsClientProps) {
+export function ServiceRequestsClient({ requests, isServiceiro, isCustomer, isLoggedIn, serviceiroGameplayTypes }: ServiceRequestsClientProps) {
   const { t } = useLanguage()
   const [filters, setFilters] = useState<RequestFilters>(DEFAULT_REQUEST_FILTERS)
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -84,6 +85,7 @@ export function ServiceRequestsClient({ requests, isServiceiro, isCustomer, isLo
                   request={r}
                   isServiceiro={isServiceiro}
                   isLoggedIn={isLoggedIn}
+                  isMatch={serviceiroGameplayTypes.includes(r.service_type)}
                 />
               ))}
             </div>

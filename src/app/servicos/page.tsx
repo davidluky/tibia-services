@@ -6,7 +6,7 @@ export default async function ServiceRequestsPage() {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: requests }, { data: profile }] = await Promise.all([
+  const [{ data: requests }, profileResult, serviceiroResult] = await Promise.all([
     supabase
       .from('service_requests')
       .select('*, customer:profiles!customer_id(display_name)')
@@ -15,8 +15,13 @@ export default async function ServiceRequestsPage() {
     user
       ? supabase.from('profiles').select('role').eq('id', user.id).single()
       : Promise.resolve({ data: null }),
+    user
+      ? supabase.from('serviceiro_profiles').select('gameplay_types').eq('id', user.id).single()
+      : Promise.resolve({ data: null }),
   ])
 
+  const profile = profileResult.data
+  const serviceiroProfile = serviceiroResult.data
   const isServiceiro = profile?.role === 'serviceiro'
   const isCustomer = profile?.role === 'customer'
 
@@ -26,6 +31,7 @@ export default async function ServiceRequestsPage() {
       isServiceiro={isServiceiro}
       isCustomer={isCustomer}
       isLoggedIn={!!user}
+      serviceiroGameplayTypes={isServiceiro && serviceiroProfile ? serviceiroProfile.gameplay_types : []}
     />
   )
 }

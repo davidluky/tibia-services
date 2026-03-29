@@ -328,6 +328,7 @@ const translations = {
     analytics_monthly: 'Servi\u00e7os por m\u00eas',
     analytics_by_type: 'Por tipo de servi\u00e7o',
     dashboard_analytics: 'Estat\u00edsticas \u2192',
+    requests_match_badge: 'Match \u2713',
   },
 
   en: {
@@ -632,6 +633,7 @@ const translations = {
     analytics_monthly: 'Services per month',
     analytics_by_type: 'By service type',
     dashboard_analytics: 'Analytics \u2192',
+    requests_match_badge: 'Match \u2713',
   },
 
   es: {
@@ -936,6 +938,7 @@ const translations = {
     analytics_monthly: 'Servicios por mes',
     analytics_by_type: 'Por tipo de servicio',
     dashboard_analytics: 'Estad\u00edsticas \u2192',
+    requests_match_badge: 'Match \u2713',
   },
 }
 
