@@ -64,10 +64,14 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
   }, [booking.id])
 
   const fetchBooking = useCallback(async () => {
-    const res = await fetch(`/api/bookings/${booking.id}`)
-    if (res.ok) {
-      const data = await res.json()
-      setBooking(data)
+    try {
+      const res = await fetch(`/api/bookings/${booking.id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setBooking(data)
+      }
+    } catch {
+      // network error — booking state stays stale
     }
   }, [booking.id])
 
@@ -108,20 +112,24 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
     const cleanContent = sanitizeText(newMessage)
     if (!cleanContent) return
 
-    const res = await fetch('/api/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ booking_id: booking.id, content: cleanContent }),
-    })
+    try {
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking_id: booking.id, content: cleanContent }),
+      })
 
-    if (res.ok) {
-      const msg = await res.json()
-      setMessages(prev => [...prev, msg])
-      setNewMessage('')
-      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
-    } else {
-      const data = await res.json()
-      setError(data.error)
+      if (res.ok) {
+        const msg = await res.json()
+        setMessages(prev => [...prev, msg])
+        setNewMessage('')
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+      } else {
+        const data = await res.json()
+        setError(data.error)
+      }
+    } catch {
+      setError(t('error_generic'))
     }
     setSendingMessage(false)
   }

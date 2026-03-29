@@ -23,6 +23,7 @@ export async function PATCH(request: NextRequest) {
   const { ids } = body
 
   if (!Array.isArray(ids) || ids.length === 0) return badRequest('Missing notification ids')
+  if (ids.length > 50) return badRequest('Too many ids')
 
   await supabase
     .from('notifications')
