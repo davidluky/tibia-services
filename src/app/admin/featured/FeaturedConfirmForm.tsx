@@ -1,12 +1,16 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
+import { useLanguage } from '@/lib/language-context'
 
 interface FeaturedConfirmFormProps {
   listingId: string
 }
 
 export function FeaturedConfirmForm({ listingId }: FeaturedConfirmFormProps) {
+  const router = useRouter()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -22,12 +26,12 @@ export function FeaturedConfirmForm({ listingId }: FeaturedConfirmFormProps) {
         // non-JSON response
       }
       if (!res.ok) {
-        setError(data.error ?? 'Erro ao confirmar.')
+        setError(data.error ?? t('admin_featured_confirm_error'))
       } else {
-        window.location.reload()
+        router.refresh()
       }
     } catch {
-      setError('Erro de conexão. Tente novamente.')
+      setError(t('admin_featured_connection_error'))
     } finally {
       setLoading(false)
     }
@@ -37,7 +41,7 @@ export function FeaturedConfirmForm({ listingId }: FeaturedConfirmFormProps) {
     <div className="shrink-0">
       {error && <p className="text-status-error text-xs mb-1">{error}</p>}
       <Button size="sm" onClick={handleConfirm} loading={loading}>
-        Confirmar pagamento
+        {t('admin_featured_confirm_btn')}
       </Button>
     </div>
   )
