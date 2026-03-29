@@ -138,7 +138,7 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
 
   const submitDispute = async () => {
     if (disputeReason.length < 10 || disputeReason.length > 500) {
-      setDisputeError('O motivo deve ter entre 10 e 500 caracteres.')
+      setDisputeError(t('booking_dispute_length_error'))
       return
     }
     setDisputeLoading(true)
@@ -151,10 +151,13 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
     })
 
     if (res.ok) {
-      window.location.reload()
+      setShowDisputeForm(false)
+      setDisputeReason('')
+      await fetchBooking()
+      setDisputeLoading(false)
     } else {
       const data = await res.json()
-      setDisputeError(data.error ?? 'Erro ao abrir disputa.')
+      setDisputeError(data.error ?? t('booking_dispute_error_fallback'))
       setDisputeLoading(false)
     }
   }
@@ -437,15 +440,15 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
                 onClick={() => setShowDisputeForm(true)}
                 className="w-full"
               >
-                Abrir Disputa
+                {t('booking_dispute_btn')}
               </Button>
             ) : (
               <Card className="p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-status-warning">Abrir Disputa</h3>
+                <h3 className="text-sm font-semibold text-status-warning">{t('booking_dispute_title')}</h3>
                 <textarea
                   value={disputeReason}
                   onChange={e => setDisputeReason(e.target.value)}
-                  placeholder="Descreva o motivo da disputa (10–500 caracteres)"
+                  placeholder={t('booking_dispute_placeholder')}
                   rows={4}
                   minLength={10}
                   maxLength={500}
@@ -463,7 +466,7 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
                     loading={disputeLoading}
                     className="flex-1"
                   >
-                    Confirmar Disputa
+                    {t('booking_dispute_confirm')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -471,7 +474,7 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
                     onClick={() => { setShowDisputeForm(false); setDisputeReason(''); setDisputeError('') }}
                     className="flex-1"
                   >
-                    Cancelar
+                    {t('booking_dispute_cancel')}
                   </Button>
                 </div>
               </Card>

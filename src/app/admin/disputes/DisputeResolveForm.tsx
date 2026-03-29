@@ -1,19 +1,23 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
+import { useLanguage } from '@/lib/language-context'
 
 interface DisputeResolveFormProps {
   disputeId: string
 }
 
 export function DisputeResolveForm({ disputeId }: DisputeResolveFormProps) {
+  const router = useRouter()
+  const { t } = useLanguage()
   const [resolution, setResolution] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const handleResolve = async () => {
     if (resolution.length < 10 || resolution.length > 500) {
-      setError('A resolução deve ter entre 10 e 500 caracteres.')
+      setError(t('admin_dispute_length_error'))
       return
     }
     setLoading(true)
@@ -32,12 +36,12 @@ export function DisputeResolveForm({ disputeId }: DisputeResolveFormProps) {
         // non-JSON response
       }
       if (!res.ok) {
-        setError(data.error ?? 'Erro ao resolver disputa.')
+        setError(data.error ?? t('admin_dispute_resolve_error'))
       } else {
-        window.location.reload()
+        router.refresh()
       }
     } catch {
-      setError('Erro de conexão. Tente novamente.')
+      setError(t('admin_dispute_connection_error'))
     } finally {
       setLoading(false)
     }
@@ -45,11 +49,11 @@ export function DisputeResolveForm({ disputeId }: DisputeResolveFormProps) {
 
   return (
     <div className="space-y-2 pt-2 border-t border-border">
-      <label className="text-xs text-text-muted block">Resolução do admin</label>
+      <label className="text-xs text-text-muted block">{t('admin_dispute_resolution_label')}</label>
       <textarea
         value={resolution}
         onChange={e => setResolution(e.target.value)}
-        placeholder="Descreva a decisão (10–500 caracteres)"
+        placeholder={t('admin_dispute_resolution_placeholder')}
         rows={3}
         maxLength={500}
         className="w-full bg-bg-primary border border-border rounded-md px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:border-gold resize-none"
@@ -61,7 +65,7 @@ export function DisputeResolveForm({ disputeId }: DisputeResolveFormProps) {
         onClick={handleResolve}
         loading={loading}
       >
-        Resolver
+        {t('admin_dispute_resolve_btn')}
       </Button>
     </div>
   )

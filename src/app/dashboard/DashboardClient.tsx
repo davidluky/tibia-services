@@ -93,10 +93,10 @@ export function DashboardClient({ profile, serviceiroProfile, userId }: Dashboar
 
     if (profileRes.error || spError) {
       setError(t('dashboard_save_error'))
-      toast.error(t('dashboard_save_error') ?? 'Erro ao salvar.')
+      toast.error(t('dashboard_save_error'))
     } else {
       setSaved(true)
-      toast.success('Perfil salvo com sucesso!')
+      toast.success(t('dashboard_save_toast_success'))
       setTimeout(() => setSaved(false), 3000)
     }
     setSaving(false)
