@@ -1,21 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sanitizeText } from '@/lib/utils'
+import {
+  getAuthUser,
+  unauthorized,
+  badRequest,
+  notFound,
+  forbidden,
+  apiError,
+  serverError,
+} from '@/lib/api-helpers'
 
 export async function POST(request: NextRequest) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
 
   const body = await request.json()
   const { booking_id, reason } = body
 
   if (!booking_id || typeof booking_id !== 'string') {
-    return NextResponse.json({ error: 'booking_id inválido.' }, { status: 400 })
+    return badRequest('booking_id inválido.')
   }
   if (typeof reason !== 'string' || reason.length < 10 || reason.length > 500) {
-    return NextResponse.json({ error: 'O motivo deve ter entre 10 e 500 caracteres.' }, { status: 400 })
+    return badRequest('O motivo deve ter entre 10 e 500 caracteres.')
   }
 
   const { data: booking } = await supabase
@@ -24,14 +31,14 @@ export async function POST(request: NextRequest) {
     .eq('id', booking_id)
     .single()
 
-  if (!booking) return NextResponse.json({ error: 'Reserva não encontrada.' }, { status: 404 })
+  if (!booking) return notFound('Reserva não encontrada.')
 
   if (booking.customer_id !== user.id && booking.serviceiro_id !== user.id) {
-    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+    return forbidden('Acesso negado.')
   }
 
   if (booking.status !== 'active') {
-    return NextResponse.json({ error: 'Reserva não está ativa.' }, { status: 409 })
+    return apiError('Reserva não está ativa.', 409)
   }
 
   const admin = createAdminClient()
@@ -43,7 +50,7 @@ export async function POST(request: NextRequest) {
     .maybeSingle()
 
   if (existing) {
-    return NextResponse.json({ error: 'Já existe uma disputa para esta reserva.' }, { status: 409 })
+    return apiError('Já existe uma disputa para esta reserva.', 409)
   }
 
   const { data: dispute, error: insertError } = await admin
@@ -53,7 +60,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (insertError || !dispute) {
-    return NextResponse.json({ error: 'Erro ao criar disputa.' }, { status: 500 })
+    return serverError('Erro ao criar disputa.')
   }
 
   const { error: updateError } = await admin
@@ -64,7 +71,7 @@ export async function POST(request: NextRequest) {
   if (updateError) {
     console.error('[disputes] Failed to update booking status, rolling back dispute:', updateError)
     await admin.from('disputes').delete().eq('id', dispute.id)
-    return NextResponse.json({ error: 'Erro ao abrir disputa. Tente novamente.' }, { status: 500 })
+    return serverError('Erro ao abrir disputa. Tente novamente.')
   }
 
   return NextResponse.json({ id: dispute.id })

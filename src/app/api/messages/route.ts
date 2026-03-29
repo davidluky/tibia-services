@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import {
+  getAuthUser,
+  unauthorized,
+  badRequest,
+  forbidden,
+  notFound,
+  serverError,
+} from '@/lib/api-helpers'
 
 export async function GET(request: NextRequest) {
-  const supabase = createClient()
   const { searchParams } = new URL(request.url)
   const booking_id = searchParams.get('booking_id')
 
-  if (!booking_id) {
-    return NextResponse.json({ error: 'booking_id requerido.' }, { status: 400 })
-  }
+  if (!booking_id) return badRequest('booking_id requerido.')
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-  }
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
 
   // Verify user is a participant
   const { data: booking } = await supabase
@@ -23,9 +25,7 @@ export async function GET(request: NextRequest) {
     .or(`customer_id.eq.${user.id},serviceiro_id.eq.${user.id}`)
     .single()
 
-  if (!booking) {
-    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
-  }
+  if (!booking) return forbidden('Acesso negado.')
 
   const { data: messages, error } = await supabase
     .from('messages')
@@ -33,31 +33,21 @@ export async function GET(request: NextRequest) {
     .eq('booking_id', booking_id)
     .order('created_at', { ascending: true })
 
-  if (error) {
-    return NextResponse.json({ error: 'Erro ao buscar mensagens.' }, { status: 500 })
-  }
+  if (error) return serverError('Erro ao buscar mensagens.')
 
   return NextResponse.json(messages)
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-  }
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
 
   const body = await request.json()
   const { booking_id, content } = body
 
-  if (!booking_id || !content?.trim()) {
-    return NextResponse.json({ error: 'Dados inválidos.' }, { status: 400 })
-  }
+  if (!booking_id || !content?.trim()) return badRequest('Dados inválidos.')
 
-  if (content.length > 1000) {
-    return NextResponse.json({ error: 'Mensagem muito longa.' }, { status: 400 })
-  }
+  if (content.length > 1000) return badRequest('Mensagem muito longa.')
 
   // Verify user is a participant and booking is active
   const { data: booking } = await supabase
@@ -67,12 +57,10 @@ export async function POST(request: NextRequest) {
     .or(`customer_id.eq.${user.id},serviceiro_id.eq.${user.id}`)
     .single()
 
-  if (!booking) {
-    return NextResponse.json({ error: 'Reserva não encontrada.' }, { status: 404 })
-  }
+  if (!booking) return notFound('Reserva não encontrada.')
 
   if (booking.status !== 'active') {
-    return NextResponse.json({ error: 'Só é possível enviar mensagens em reservas ativas.' }, { status: 400 })
+    return badRequest('Só é possível enviar mensagens em reservas ativas.')
   }
 
   const { data: message, error } = await supabase
@@ -85,9 +73,7 @@ export async function POST(request: NextRequest) {
     .select('*, sender:profiles!sender_id(display_name)')
     .single()
 
-  if (error) {
-    return NextResponse.json({ error: 'Erro ao enviar mensagem.' }, { status: 500 })
-  }
+  if (error) return serverError('Erro ao enviar mensagem.')
 
   return NextResponse.json(message, { status: 201 })
 }

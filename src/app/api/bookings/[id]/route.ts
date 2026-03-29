@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { isValidTC } from '@/lib/utils'
 import {
   sendBookingAccepted,
@@ -7,17 +6,21 @@ import {
   sendBookingCompleted,
   sendBookingCancelled,
 } from '@/lib/email'
+import {
+  getAuthUser,
+  unauthorized,
+  notFound,
+  forbidden,
+  badRequest,
+  serverError,
+} from '@/lib/api-helpers'
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-  }
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
 
   const { data: booking } = await supabase
     .from('bookings')
@@ -29,12 +32,10 @@ export async function GET(
     .eq('id', params.id)
     .single()
 
-  if (!booking) {
-    return NextResponse.json({ error: 'Reserva não encontrada.' }, { status: 404 })
-  }
+  if (!booking) return notFound('Reserva não encontrada.')
 
   if (booking.customer_id !== user.id && booking.serviceiro_id !== user.id) {
-    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+    return forbidden('Acesso negado.')
   }
 
   return NextResponse.json(booking)
@@ -44,12 +45,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-  }
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
 
   // Fetch the booking to verify participant status
   const { data: booking } = await supabase
@@ -58,16 +55,12 @@ export async function PATCH(
     .eq('id', params.id)
     .single()
 
-  if (!booking) {
-    return NextResponse.json({ error: 'Reserva não encontrada.' }, { status: 404 })
-  }
+  if (!booking) return notFound('Reserva não encontrada.')
 
   const isCustomer = user.id === booking.customer_id
   const isServiceiro = user.id === booking.serviceiro_id
 
-  if (!isCustomer && !isServiceiro) {
-    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
-  }
+  if (!isCustomer && !isServiceiro) return forbidden('Acesso negado.')
 
   const body = await request.json()
   const { action, price_tc } = body
@@ -86,22 +79,22 @@ export async function PATCH(
 
   switch (action) {
     case 'accept':
-      if (!isServiceiro) return NextResponse.json({ error: 'Somente o serviceiro pode aceitar.' }, { status: 403 })
-      if (booking.status !== 'pending') return NextResponse.json({ error: 'Reserva não está pendente.' }, { status: 400 })
+      if (!isServiceiro) return forbidden('Somente o serviceiro pode aceitar.')
+      if (booking.status !== 'pending') return badRequest('Reserva não está pendente.')
       update = { status: 'active' }
       pendingEmail = () => sendBookingAccepted({ bookingId: params.id, customerId: booking.customer_id, serviceiroName, serviceType: booking.service_type })
       break
 
     case 'decline':
-      if (!isServiceiro) return NextResponse.json({ error: 'Somente o serviceiro pode recusar.' }, { status: 403 })
-      if (booking.status !== 'pending') return NextResponse.json({ error: 'Reserva não está pendente.' }, { status: 400 })
+      if (!isServiceiro) return forbidden('Somente o serviceiro pode recusar.')
+      if (booking.status !== 'pending') return badRequest('Reserva não está pendente.')
       update = { status: 'declined' }
       pendingEmail = () => sendBookingDeclined({ bookingId: params.id, customerId: booking.customer_id, serviceiroName, serviceType: booking.service_type })
       break
 
     case 'cancel': {
       if (booking.status !== 'active' && booking.status !== 'pending') {
-        return NextResponse.json({ error: 'Não é possível cancelar esta reserva.' }, { status: 400 })
+        return badRequest('Não é possível cancelar esta reserva.')
       }
       update = { status: 'cancelled' }
       const recipientId = isCustomer ? booking.serviceiro_id : booking.customer_id
@@ -112,9 +105,9 @@ export async function PATCH(
 
     case 'set_price':
       if (!price_tc || !isValidTC(price_tc)) {
-        return NextResponse.json({ error: 'Preço inválido. Deve ser múltiplo de 25 TC.' }, { status: 400 })
+        return badRequest('Preço inválido. Deve ser múltiplo de 25 TC.')
       }
-      if (booking.status !== 'active') return NextResponse.json({ error: 'Reserva não está ativa.' }, { status: 400 })
+      if (booking.status !== 'active') return badRequest('Reserva não está ativa.')
       update = {
         agreed_price_tc: price_tc,
         price_confirmed_by_customer: isCustomer,
@@ -123,24 +116,24 @@ export async function PATCH(
       break
 
     case 'confirm_price':
-      if (booking.status !== 'active') return NextResponse.json({ error: 'Reserva não está ativa.' }, { status: 400 })
-      if (!booking.agreed_price_tc) return NextResponse.json({ error: 'Preço ainda não definido.' }, { status: 400 })
+      if (booking.status !== 'active') return badRequest('Reserva não está ativa.')
+      if (!booking.agreed_price_tc) return badRequest('Preço ainda não definido.')
       if (isCustomer) update = { price_confirmed_by_customer: true }
       else update = { price_confirmed_by_serviceiro: true }
       break
 
     case 'payment_sent':
-      if (!isCustomer) return NextResponse.json({ error: 'Somente o cliente pode confirmar pagamento.' }, { status: 403 })
+      if (!isCustomer) return forbidden('Somente o cliente pode confirmar pagamento.')
       update = { payment_sent_by_customer: true }
       break
 
     case 'payment_received':
-      if (!isServiceiro) return NextResponse.json({ error: 'Somente o serviceiro pode confirmar recebimento.' }, { status: 403 })
+      if (!isServiceiro) return forbidden('Somente o serviceiro pode confirmar recebimento.')
       update = { payment_received_by_serviceiro: true }
       break
 
     case 'mark_complete': {
-      if (booking.status !== 'active') return NextResponse.json({ error: 'Reserva não está ativa.' }, { status: 400 })
+      if (booking.status !== 'active') return badRequest('Reserva não está ativa.')
       if (isCustomer) update = { complete_by_customer: true }
       else update = { complete_by_serviceiro: true }
 
@@ -157,7 +150,7 @@ export async function PATCH(
     }
 
     default:
-      return NextResponse.json({ error: 'Ação inválida.' }, { status: 400 })
+      return badRequest('Ação inválida.')
   }
 
   const { error } = await supabase
@@ -165,9 +158,7 @@ export async function PATCH(
     .update(update)
     .eq('id', params.id)
 
-  if (error) {
-    return NextResponse.json({ error: 'Erro ao atualizar reserva.' }, { status: 500 })
-  }
+  if (error) return serverError('Erro ao atualizar reserva.')
 
   pendingEmail?.()
 

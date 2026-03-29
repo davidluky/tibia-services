@@ -1,32 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { GAMEPLAY_TYPES } from '@/lib/constants'
 import { sendBookingCreated } from '@/lib/email'
+import {
+  getAuthUser,
+  unauthorized,
+  badRequest,
+  forbidden,
+  notFound,
+  tooManyRequests,
+  serverError,
+  checkRateLimit,
+} from '@/lib/api-helpers'
 
 export async function POST(request: NextRequest) {
-  const supabase = createClient()
-
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-  }
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
 
   const body = await request.json()
   const { serviceiro_id, service_type } = body
 
   if (!serviceiro_id || !service_type) {
-    return NextResponse.json({ error: 'Dados inválidos.' }, { status: 400 })
+    return badRequest('Dados inválidos.')
   }
 
   // Validate service_type is a known gameplay type
   const validTypes = GAMEPLAY_TYPES.map(g => g.key)
   if (!validTypes.includes(service_type)) {
-    return NextResponse.json({ error: 'Tipo de serviço inválido.' }, { status: 400 })
+    return badRequest('Tipo de serviço inválido.')
   }
 
   // Verify the customer is not trying to book themselves
   if (user.id === serviceiro_id) {
-    return NextResponse.json({ error: 'Você não pode reservar a si mesmo.' }, { status: 400 })
+    return badRequest('Você não pode reservar a si mesmo.')
   }
 
   // Verify requesting user is a customer
@@ -37,7 +42,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (!profile || profile.role !== 'customer') {
-    return NextResponse.json({ error: 'Somente clientes podem criar reservas.' }, { status: 403 })
+    return forbidden('Somente clientes podem criar reservas.')
   }
 
   // Verify serviceiro exists
@@ -49,22 +54,13 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (!serviceiro || serviceiro.is_banned) {
-    return NextResponse.json({ error: 'Serviceiro não encontrado.' }, { status: 404 })
+    return notFound('Serviceiro não encontrado.')
   }
 
   // Rate limit: max 3 booking requests per minute per user
-  const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString()
-  const { count: recentBookings } = await supabase
-    .from('bookings')
-    .select('*', { count: 'exact', head: true })
-    .eq('customer_id', user.id)
-    .gt('created_at', oneMinuteAgo)
-
-  if ((recentBookings ?? 0) >= 3) {
-    return NextResponse.json(
-      { error: 'Muitas solicitações. Aguarde um momento antes de tentar novamente.' },
-      { status: 429 }
-    )
+  const rateLimited = await checkRateLimit(supabase, 'bookings', 'customer_id', user.id, 60_000, 3)
+  if (rateLimited) {
+    return tooManyRequests('Muitas solicitações. Aguarde um momento antes de tentar novamente.')
   }
 
   // Create the booking
@@ -80,7 +76,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) {
-    return NextResponse.json({ error: 'Erro ao criar reserva.' }, { status: 500 })
+    return serverError('Erro ao criar reserva.')
   }
 
   void sendBookingCreated({

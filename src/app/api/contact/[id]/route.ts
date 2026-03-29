@@ -1,19 +1,20 @@
 // Returns WhatsApp + Discord for a serviceiro IF the requesting user has an
 // active or completed booking with them. Never exposes contact to strangers.
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import {
+  getAuthUser,
+  unauthorized,
+  forbidden,
+  notFound,
+} from '@/lib/api-helpers'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient()
-
-  // Verify the user is authenticated
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-  }
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
 
   // Check that a qualifying booking exists between this user and the serviceiro
   const { data: booking } = await supabase
@@ -26,14 +27,10 @@ export async function GET(
     .single()
 
   if (!booking) {
-    return NextResponse.json(
-      { error: 'Você precisa ter uma reserva ativa com este serviceiro para ver o contato.' },
-      { status: 403 }
-    )
+    return forbidden('Você precisa ter uma reserva ativa com este serviceiro para ver o contato.')
   }
 
   // Fetch contact info using admin client (bypasses RLS on contact fields)
-  const { createAdminClient } = await import('@/lib/supabase/admin')
   const admin = createAdminClient()
   const { data: profile } = await admin
     .from('profiles')
@@ -41,9 +38,7 @@ export async function GET(
     .eq('id', params.id)
     .single()
 
-  if (!profile) {
-    return NextResponse.json({ error: 'Perfil não encontrado.' }, { status: 404 })
-  }
+  if (!profile) return notFound('Perfil não encontrado.')
 
   return NextResponse.json({
     whatsapp: profile.whatsapp ?? 'Não informado',
