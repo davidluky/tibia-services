@@ -25,9 +25,10 @@ interface ServiceRequestCardProps {
   request: ServiceRequest
   isServiceiro: boolean
   isLoggedIn: boolean
+  isMatch?: boolean
 }
 
-export function ServiceRequestCard({ request, isServiceiro, isLoggedIn }: ServiceRequestCardProps) {
+export function ServiceRequestCard({ request, isServiceiro, isLoggedIn, isMatch }: ServiceRequestCardProps) {
   const { t } = useLanguage()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -62,6 +63,11 @@ export function ServiceRequestCard({ request, isServiceiro, isLoggedIn }: Servic
           {gameplayType && (
             <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
               {gameplayType.label}
+            </span>
+          )}
+          {isMatch && (
+            <span className="inline-block mt-1 ml-1 text-xs px-2 py-0.5 rounded-full bg-status-success/10 text-status-success border border-status-success/20">
+              {t('requests_match_badge')}
             </span>
           )}
         </div>
