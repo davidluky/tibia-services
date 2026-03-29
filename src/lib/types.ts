@@ -107,6 +107,20 @@ export interface FeaturedListing {
   expires_at: string | null
 }
 
+export interface ServiceRequest {
+  id: string
+  service_type: string
+  title: string
+  description: string | null
+  flexible_time: boolean
+  preferred_date: string | null
+  preferred_time: string | null
+  budget_tc: number | null
+  status: string
+  created_at: string
+  customer: { display_name: string | null } | null
+}
+
 export interface VerificationRequest {
   id: string
   serviceiro_id: string

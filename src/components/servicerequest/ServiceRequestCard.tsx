@@ -6,20 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useLanguage } from '@/lib/language-context'
 import { GAMEPLAY_TYPES } from '@/lib/constants'
-
-export interface ServiceRequest {
-  id: string
-  service_type: string
-  title: string
-  description: string | null
-  flexible_time: boolean
-  preferred_date: string | null
-  preferred_time: string | null
-  budget_tc: number | null
-  status: string
-  created_at: string
-  customer: { display_name: string | null } | null
-}
+import type { ServiceRequest } from '@/lib/types'
 
 interface ServiceRequestCardProps {
   request: ServiceRequest

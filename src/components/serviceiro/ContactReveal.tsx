@@ -21,17 +21,22 @@ export function ContactReveal({ serviceiroId, isLoggedIn }: ContactRevealProps) 
     setLoading(true)
     setError('')
 
-    const res = await fetch(`/api/contact/${serviceiroId}`)
-    const data = await res.json()
+    try {
+      const res = await fetch(`/api/contact/${serviceiroId}`)
+      const data = await res.json()
 
-    if (!res.ok) {
-      setError(data.error)
+      if (!res.ok) {
+        setError(data.error)
+        setLoading(false)
+        return
+      }
+
+      setContact(data)
       setLoading(false)
-      return
+    } catch {
+      setError('Erro ao carregar contato.')
+      setLoading(false)
     }
-
-    setContact(data)
-    setLoading(false)
   }
 
   if (contact) {

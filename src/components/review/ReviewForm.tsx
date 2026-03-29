@@ -27,26 +27,31 @@ export function ReviewForm({ bookingId, serviceiroId }: ReviewFormProps) {
     setLoading(true)
     setError('')
 
-    const res = await fetch('/api/reviews', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        booking_id: bookingId,
-        serviceiro_id: serviceiroId,
-        rating,
-        comment,
-      }),
-    })
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          booking_id: bookingId,
+          serviceiro_id: serviceiroId,
+          rating,
+          comment,
+        }),
+      })
 
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error)
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error)
+        setLoading(false)
+        return
+      }
+
+      setSubmitted(true)
       setLoading(false)
-      return
+    } catch {
+      setError(t('error_generic'))
+      setLoading(false)
     }
-
-    setSubmitted(true)
-    setLoading(false)
   }
 
   if (submitted) {

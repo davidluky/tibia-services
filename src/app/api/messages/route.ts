@@ -7,6 +7,7 @@ import {
   notFound,
   serverError,
 } from '@/lib/api-helpers'
+import { sanitizeText } from '@/lib/utils'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
     .insert({
       booking_id,
       sender_id: user.id,
-      content: content.trim(),
+      content: sanitizeText(content),
     })
     .select('*, sender:profiles!sender_id(display_name)')
     .single()

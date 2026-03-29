@@ -52,11 +52,13 @@ interface Props {
 - `Ter, Qui · das 14:00 às 22:00 · UTC-3`
 - `Sem disponibilidade` (when `availableWeekdays` is empty)
 
+The timezone text uses the `avail_summary_timezone` i18n key with `{offset}` replaced: `t('avail_summary_timezone').replace('{offset}', timezoneOffset >= 0 ? '+' + timezoneOffset : String(timezoneOffset))`
+
 **Day name logic:**
 
 Use the existing `avail_mon`, `avail_tue`, etc. translation keys for day abbreviations.
 
-When all 7 days are selected, render `t('avail_summary_days_all')` instead of listing them.
+When all 7 days are selected (checked with `new Set(availableWeekdays).size === 7`), render `t('avail_summary_days_all')` instead of listing them. Using a Set handles any edge case with duplicate entries in the array.
 
 When 0 days are selected, render `t('avail_summary_days_none')` and stop (no hours needed).
 
@@ -94,7 +96,9 @@ export function AvailabilitySummary({ availableWeekdays, availableFrom, availabl
     )
   }
 
-  const daysText = availableWeekdays.length === 7
+  const daysAllSet = new Set(availableWeekdays).size === 7
+
+  const daysText = daysAllSet
     ? t('avail_summary_days_all')
     : availableWeekdays
         .sort((a, b) => DAY_KEYS.indexOf(a as typeof DAY_KEYS[number]) - DAY_KEYS.indexOf(b as typeof DAY_KEYS[number]))
@@ -105,7 +109,8 @@ export function AvailabilitySummary({ availableWeekdays, availableFrom, availabl
     ? t('avail_summary_hours_range').replace('{from}', availableFrom).replace('{to}', availableTo)
     : t('avail_summary_hours_any')
 
-  const tzText = `UTC${timezoneOffset >= 0 ? '+' + timezoneOffset : timezoneOffset}`
+  const tzOffset = timezoneOffset >= 0 ? `+${timezoneOffset}` : String(timezoneOffset)
+  const tzText = t('avail_summary_timezone').replace('{offset}', tzOffset)
 
   return (
     <p className="text-sm text-text-muted mb-3">

@@ -2,7 +2,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '@/lib/language-context'
-import { ServiceRequestCard, type ServiceRequest } from '@/components/servicerequest/ServiceRequestCard'
+import { ServiceRequestCard } from '@/components/servicerequest/ServiceRequestCard'
+import type { ServiceRequest } from '@/lib/types'
 import { ServiceRequestFilters, DEFAULT_REQUEST_FILTERS, type RequestFilters } from '@/components/servicerequest/ServiceRequestFilters'
 
 function applyRequestFilters(requests: ServiceRequest[], filters: RequestFilters): ServiceRequest[] {
