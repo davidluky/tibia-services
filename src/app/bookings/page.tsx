@@ -12,6 +12,8 @@ const STATUS_LABELS: Record<string, string> = {
   completed: 'Concluída',
   declined: 'Recusada',
   cancelled: 'Cancelada',
+  disputed: 'Disputada',
+  resolved: 'Resolvida',
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -20,6 +22,8 @@ const STATUS_COLORS: Record<string, string> = {
   completed: 'text-gold',
   declined: 'text-status-error',
   cancelled: 'text-text-muted',
+  disputed: 'text-status-warning',
+  resolved: 'text-text-muted',
 }
 
 export default async function BookingsPage() {
@@ -41,7 +45,7 @@ export default async function BookingsPage() {
   const groups = {
     active: (bookings ?? []).filter((b: Booking) => b.status === 'active'),
     pending: (bookings ?? []).filter((b: Booking) => b.status === 'pending'),
-    completed: (bookings ?? []).filter((b: Booking) => ['completed', 'declined', 'cancelled'].includes(b.status)),
+    completed: (bookings ?? []).filter((b: Booking) => ['completed', 'declined', 'cancelled', 'disputed', 'resolved'].includes(b.status)),
   }
 
   return (

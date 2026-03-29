@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { timeAgo, formatTC, sanitizeText } from '@/lib/utils'
@@ -110,7 +109,10 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
     setError('')
 
     const cleanContent = sanitizeText(newMessage)
-    if (!cleanContent) return
+    if (!cleanContent) {
+      setSendingMessage(false)
+      return
+    }
 
     try {
       const res = await fetch('/api/messages', {
@@ -138,17 +140,21 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
     setActionLoading(action)
     setError('')
 
-    const res = await fetch(`/api/bookings/${booking.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, ...extra }),
-    })
+    try {
+      const res = await fetch(`/api/bookings/${booking.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ...extra }),
+      })
 
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error)
-    } else {
-      await fetchBooking()
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error)
+      } else {
+        await fetchBooking()
+      }
+    } catch {
+      setError(t('error_generic'))
     }
     setActionLoading(null)
   }

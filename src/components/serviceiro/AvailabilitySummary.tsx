@@ -1,7 +1,6 @@
 'use client'
 import { useLanguage } from '@/lib/language-context'
-
-const DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const
+import { WEEKDAYS } from '@/lib/constants'
 
 interface Props {
   availableWeekdays: string[]
@@ -21,10 +20,12 @@ export function AvailabilitySummary({ availableWeekdays, availableFrom, availabl
 
   const daysAllSet = new Set(availableWeekdays).size === 7
 
+  const weekdayKeys = WEEKDAYS.map(w => w.key)
+
   const daysText = daysAllSet
     ? t('avail_summary_days_all')
     : availableWeekdays
-        .sort((a, b) => DAY_KEYS.indexOf(a as typeof DAY_KEYS[number]) - DAY_KEYS.indexOf(b as typeof DAY_KEYS[number]))
+        .sort((a, b) => weekdayKeys.indexOf(a as typeof weekdayKeys[number]) - weekdayKeys.indexOf(b as typeof weekdayKeys[number]))
         .map(d => t(`avail_${d}` as Parameters<typeof t>[0]))
         .join(', ')
 

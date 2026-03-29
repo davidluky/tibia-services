@@ -1,4 +1,4 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser, unauthorized, badRequest } from '@/lib/api-helpers'
 
 export async function GET() {
@@ -12,7 +12,7 @@ export async function GET() {
     .order('created_at', { ascending: false })
     .limit(20)
 
-  return Response.json(data ?? [])
+  return NextResponse.json(data ?? [])
 }
 
 export async function PATCH(request: NextRequest) {
@@ -31,5 +31,5 @@ export async function PATCH(request: NextRequest) {
     .in('id', ids)
     .eq('user_id', user.id)
 
-  return Response.json({ ok: true })
+  return NextResponse.json({ ok: true })
 }

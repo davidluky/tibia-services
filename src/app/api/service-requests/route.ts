@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { isValidTC, sanitizeText } from '@/lib/utils'
+import { GAMEPLAY_TYPES } from '@/lib/constants'
 import {
   getAuthUserWithProfile,
   unauthorized,
@@ -7,10 +8,6 @@ import {
   badRequest,
   serverError,
 } from '@/lib/api-helpers'
-
-const VALID_SERVICE_TYPES = [
-  'hunt_x1', 'hunt_x2', 'hunt_x3plus', 'quests', 'ks_pk', 'bestiary',
-]
 
 export async function POST(request: Request) {
   const { user, profile, supabase } = await getAuthUserWithProfile()
@@ -41,7 +38,7 @@ export async function POST(request: Request) {
   } = body as Record<string, unknown>
 
   // Validate service_type
-  if (typeof service_type !== 'string' || !VALID_SERVICE_TYPES.includes(service_type)) {
+  if (typeof service_type !== 'string' || !GAMEPLAY_TYPES.map(g => g.key).includes(service_type as typeof GAMEPLAY_TYPES[number]['key'])) {
     return badRequest('invalid_service_type')
   }
 

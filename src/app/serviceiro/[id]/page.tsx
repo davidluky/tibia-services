@@ -5,6 +5,11 @@ import { Badge } from '@/components/ui/Badge'
 import { Stars } from '@/components/ui/Stars'
 import { Card } from '@/components/ui/Card'
 import { ContactReveal } from '@/components/serviceiro/ContactReveal'
+import { BookNowForm } from './BookNowForm'
+import { AvailabilitySummary } from '@/components/serviceiro/AvailabilitySummary'
+import { AvailabilityGrid } from '@/components/serviceiro/AvailabilityGrid'
+import { ServiceiroStats } from '@/components/serviceiro/ServiceiroStats'
+import { ServiceiroSummaryLine } from '@/components/serviceiro/ServiceiroSummaryLine'
 import { VOCATIONS, GAMEPLAY_TYPES } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 import type { Review } from '@/lib/types'
@@ -257,9 +262,3 @@ function BookNowSection({ serviceiroId, serviceiroName, gameplayTypes }: {
   )
 }
 
-// Separate client component
-import { BookNowForm } from './BookNowForm'
-import { AvailabilitySummary } from '@/components/serviceiro/AvailabilitySummary'
-import { AvailabilityGrid } from '@/components/serviceiro/AvailabilityGrid'
-import { ServiceiroStats } from '@/components/serviceiro/ServiceiroStats'
-import { ServiceiroSummaryLine } from '@/components/serviceiro/ServiceiroSummaryLine'

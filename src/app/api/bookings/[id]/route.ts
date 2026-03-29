@@ -135,11 +135,13 @@ export async function PATCH(
 
     case 'payment_sent':
       if (!isCustomer) return forbidden('Somente o cliente pode confirmar pagamento.')
+      if (booking.status !== 'active') return badRequest('Booking must be active')
       update = { payment_sent_by_customer: true }
       break
 
     case 'payment_received':
       if (!isServiceiro) return forbidden('Somente o serviceiro pode confirmar recebimento.')
+      if (booking.status !== 'active') return badRequest('Booking must be active')
       update = { payment_received_by_serviceiro: true }
       break
 

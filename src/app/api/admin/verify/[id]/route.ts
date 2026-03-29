@@ -4,6 +4,7 @@ import {
   unauthorized,
   badRequest,
   notFound,
+  serverError,
 } from '@/lib/api-helpers'
 
 export async function PATCH(
@@ -34,33 +35,37 @@ export async function PATCH(
 
   if (action === 'approve') {
     // Update verification request
-    await auth.adminClient.from('verification_requests').update({
+    const { error: verifyError } = await auth.adminClient.from('verification_requests').update({
       status: 'approved',
       admin_notes: admin_notes || null,
       fee_paid: fee_paid ?? false,
       reviewed_at: new Date().toISOString(),
       reviewed_by: auth.user.id,
     }).eq('id', params.id)
+    if (verifyError) return serverError()
 
     // Set is_registered on serviceiro profile
-    await auth.adminClient.from('serviceiro_profiles').update({
+    const { error: profileError } = await auth.adminClient.from('serviceiro_profiles').update({
       is_registered: true,
       registered_at: new Date().toISOString(),
     }).eq('id', req.serviceiro_id)
+    if (profileError) return serverError()
 
   } else if (action === 'reject') {
-    await auth.adminClient.from('verification_requests').update({
+    const { error: rejectError } = await auth.adminClient.from('verification_requests').update({
       status: 'rejected',
       admin_notes: admin_notes || null,
       fee_paid: fee_paid ?? false,
       reviewed_at: new Date().toISOString(),
       reviewed_by: auth.user.id,
     }).eq('id', params.id)
+    if (rejectError) return serverError()
 
   } else if (action === 'fee_paid') {
-    await auth.adminClient.from('verification_requests').update({
+    const { error: feeError } = await auth.adminClient.from('verification_requests').update({
       fee_paid: true,
     }).eq('id', params.id)
+    if (feeError) return serverError()
 
   } else {
     return badRequest('Ação inválida.')

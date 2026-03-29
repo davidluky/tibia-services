@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Stars } from '@/components/ui/Stars'
-import { VOCATIONS, GAMEPLAY_TYPES } from '@/lib/constants'
+import { VOCATIONS, GAMEPLAY_TYPES, WEEKDAYS } from '@/lib/constants'
 import type { ServiceiroWithProfile } from '@/lib/types'
 import { useLanguage } from '@/lib/language-context'
 
@@ -75,7 +75,7 @@ export function ServiceiroCard({ serviceiro, isFeatured }: ServiceiroCardProps) 
 
         {/* Available weekdays */}
         <div className="flex gap-1 mt-auto pt-2 border-t border-border">
-          {['mon','tue','wed','thu','fri','sat','sun'].map(day => (
+          {WEEKDAYS.map(w => w.key).map(day => (
             <span
               key={day}
               className={`text-xs px-1.5 py-0.5 rounded ${

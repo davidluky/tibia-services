@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server'
 import { getAuthUserWithProfile, unauthorized, forbidden } from '@/lib/api-helpers'
 
 export async function GET() {
@@ -51,7 +52,7 @@ export async function GET() {
     avg: Math.round((sum / count) * 10) / 10,
   }))
 
-  return Response.json({
+  return NextResponse.json({
     totalCompleted: completed.length,
     totalRevenue,
     totalBookings: bookings?.length ?? 0,

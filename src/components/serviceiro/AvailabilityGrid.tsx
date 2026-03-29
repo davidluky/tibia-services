@@ -1,5 +1,6 @@
 'use client'
 import { useLanguage } from '@/lib/language-context'
+import { WEEKDAYS } from '@/lib/constants'
 
 interface AvailabilityGridProps {
   availableWeekdays: string[]
@@ -29,15 +30,10 @@ export function AvailabilityGrid({
 }: AvailabilityGridProps) {
   const { t } = useLanguage()
 
-  const DAYS = [
-    { key: 'mon', label: t('avail_mon') },
-    { key: 'tue', label: t('avail_tue') },
-    { key: 'wed', label: t('avail_wed') },
-    { key: 'thu', label: t('avail_thu') },
-    { key: 'fri', label: t('avail_fri') },
-    { key: 'sat', label: t('avail_sat') },
-    { key: 'sun', label: t('avail_sun') },
-  ]
+  const DAYS = WEEKDAYS.map(w => ({
+    key: w.key,
+    label: t(`avail_${w.key}` as Parameters<typeof t>[0]),
+  }))
 
   const fromHour = availableFrom ? parseHour(availableFrom) : null
   const toHour = availableTo ? parseHour(availableTo) : null
