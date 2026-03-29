@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import {
+  getAuthUser,
+  unauthorized,
+  forbidden,
+  badRequest,
+  apiError,
+  serverError,
+} from '@/lib/api-helpers'
 
 export async function GET() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -14,7 +20,7 @@ export async function GET() {
     .single()
 
   if (!profile || profile.role !== 'serviceiro') {
-    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+    return forbidden('Acesso negado.')
   }
 
   const admin = createAdminClient()
@@ -31,9 +37,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -42,14 +47,14 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (!profile || profile.role !== 'serviceiro') {
-    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+    return forbidden('Acesso negado.')
   }
 
   let body: Record<string, unknown>
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'JSON inválido.' }, { status: 400 })
+    return badRequest('JSON inválido.')
   }
   const { tc_amount } = body
 
@@ -60,10 +65,7 @@ export async function POST(request: NextRequest) {
     tc_amount > 750 ||
     tc_amount % 25 !== 0
   ) {
-    return NextResponse.json(
-      { error: 'Valor inválido. Mínimo 25 TC, máximo 750 TC, múltiplo de 25.' },
-      { status: 400 }
-    )
+    return badRequest('Valor inválido. Mínimo 25 TC, máximo 750 TC, múltiplo de 25.')
   }
 
   const admin = createAdminClient()
@@ -79,11 +81,11 @@ export async function POST(request: NextRequest) {
   if (existing) {
     // Active listing that hasn't expired yet
     if (existing.status === 'active' && existing.expires_at && new Date(existing.expires_at) > new Date()) {
-      return NextResponse.json({ error: 'Você já tem um destaque ativo.' }, { status: 409 })
+      return apiError('Você já tem um destaque ativo.', 409)
     }
     // Pending listing (within or past 24h)
     if (existing.status === 'pending') {
-      return NextResponse.json({ error: 'Você já tem um pedido de destaque pendente.' }, { status: 409 })
+      return apiError('Você já tem um pedido de destaque pendente.', 409)
     }
   }
 
@@ -94,7 +96,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (insertError || !listing) {
-    return NextResponse.json({ error: 'Erro ao criar pedido.' }, { status: 500 })
+    return serverError('Erro ao criar pedido.')
   }
 
   return NextResponse.json({ id: listing.id })

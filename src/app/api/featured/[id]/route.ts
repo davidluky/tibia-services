@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import {
+  getAuthUser,
+  unauthorized,
+  notFound,
+  forbidden,
+  apiError,
+  serverError,
+} from '@/lib/api-helpers'
 
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
+  const { user } = await getAuthUser()
+  if (!user) return unauthorized()
 
   const admin = createAdminClient()
 
@@ -18,21 +24,21 @@ export async function DELETE(
     .eq('id', params.id)
     .single()
 
-  if (!listing) return NextResponse.json({ error: 'Pedido não encontrado.' }, { status: 404 })
+  if (!listing) return notFound('Pedido não encontrado.')
 
   if (listing.serviceiro_id !== user.id) {
-    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+    return forbidden('Acesso negado.')
   }
 
   if (listing.status !== 'pending') {
-    return NextResponse.json({ error: 'Apenas pedidos pendentes podem ser cancelados.' }, { status: 409 })
+    return apiError('Apenas pedidos pendentes podem ser cancelados.', 409)
   }
 
   const { error: updateError } = await admin.from('featured_listings').update({ status: 'canceled' }).eq('id', params.id)
 
   if (updateError) {
     console.error('[featured] Failed to cancel listing:', updateError)
-    return NextResponse.json({ error: 'Erro ao cancelar pedido.' }, { status: 500 })
+    return serverError('Erro ao cancelar pedido.')
   }
 
   return NextResponse.json({ success: true })

@@ -1,7 +1,15 @@
 import { NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
-import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import {
+  getAuthUser,
+  unauthorized,
+  forbidden,
+  badRequest,
+  notFound,
+  apiError,
+  serverError,
+} from '@/lib/api-helpers'
 
 function generateVerificationCode(userId: string): string {
   const secret = process.env.CHAR_VERIFY_SECRET ?? 'dev-secret'
@@ -10,11 +18,8 @@ function generateVerificationCode(userId: string): string {
 }
 
 export async function GET() {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-  }
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
 
   // Verify role is serviceiro
   const { data: profile } = await supabase
@@ -24,7 +29,7 @@ export async function GET() {
     .single()
 
   if (!profile || profile.role !== 'serviceiro') {
-    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+    return forbidden('Acesso negado.')
   }
 
   // Fetch current verification state
@@ -43,11 +48,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    return NextResponse.json({ error: 'Não autorizado.' }, { status: 401 })
-  }
+  const { user, supabase } = await getAuthUser()
+  if (!user) return unauthorized()
 
   // Verify role is serviceiro
   const { data: profile } = await supabase
@@ -57,7 +59,7 @@ export async function POST(request: Request) {
     .single()
 
   if (!profile || profile.role !== 'serviceiro') {
-    return NextResponse.json({ error: 'Acesso negado.' }, { status: 403 })
+    return forbidden('Acesso negado.')
   }
 
   const body = await request.json()
@@ -65,11 +67,11 @@ export async function POST(request: Request) {
 
   // Validate character name: non-empty, max 30 chars, letters and spaces only
   if (!character_name || typeof character_name !== 'string') {
-    return NextResponse.json({ error: 'Nome do personagem é obrigatório.' }, { status: 400 })
+    return badRequest('Nome do personagem é obrigatório.')
   }
   const trimmed = character_name.trim()
   if (!/^[a-zA-Z ]{1,30}$/.test(trimmed)) {
-    return NextResponse.json({ error: 'Nome inválido. Use apenas letras e espaços (máx. 30 caracteres).' }, { status: 400 })
+    return badRequest('Nome inválido. Use apenas letras e espaços (máx. 30 caracteres).')
   }
 
   const verificationCode = generateVerificationCode(user.id)
@@ -82,24 +84,22 @@ export async function POST(request: Request) {
       { next: { revalidate: 0 } } // no caching
     )
     if (!res.ok) {
-      return NextResponse.json({ error: 'Não foi possível verificar o personagem. Tente novamente.' }, { status: 502 })
+      return apiError('Não foi possível verificar o personagem. Tente novamente.', 502)
     }
     const data = await res.json()
     const char = data?.character?.character
     if (!char || !char.name) {
-      return NextResponse.json({ error: 'Personagem não encontrado no Tibia.' }, { status: 404 })
+      return notFound('Personagem não encontrado no Tibia.')
     }
     characterData = { name: char.name, comment: char.comment ?? null }
   } catch {
-    return NextResponse.json({ error: 'Não foi possível verificar o personagem. Tente novamente.' }, { status: 502 })
+    return apiError('Não foi possível verificar o personagem. Tente novamente.', 502)
   }
 
   // Check if comment contains the verification code (case-insensitive)
   const commentUpper = (characterData.comment ?? '').toUpperCase()
   if (!commentUpper.includes(verificationCode)) {
-    return NextResponse.json({
-      error: 'Código de verificação não encontrado no comentário do personagem.',
-    }, { status: 400 })
+    return badRequest('Código de verificação não encontrado no comentário do personagem.')
   }
 
   // Verify serviceiro_profiles row exists before updating
@@ -110,9 +110,7 @@ export async function POST(request: Request) {
     .eq('id', user.id)
     .single()
 
-  if (!existing) {
-    return NextResponse.json({ error: 'Perfil de serviceiro não encontrado.' }, { status: 404 })
-  }
+  if (!existing) return notFound('Perfil de serviceiro não encontrado.')
 
   // Update with verified character name (use API-normalized name)
   const { error: updateError } = await admin.from('serviceiro_profiles').update({
@@ -122,7 +120,7 @@ export async function POST(request: Request) {
 
   if (updateError) {
     console.error('[verify-character] Failed to update profile:', updateError)
-    return NextResponse.json({ error: 'Erro ao salvar verificação. Tente novamente.' }, { status: 500 })
+    return serverError('Erro ao salvar verificação. Tente novamente.')
   }
 
   return NextResponse.json({ success: true, character_name: characterData.name })
