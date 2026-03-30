@@ -1,6 +1,6 @@
 export type Locale = 'pt' | 'en' | 'es'
 
-const translations = {
+export const translations = {
   pt: {
     // Navbar
     nav_browse: 'Buscar',
