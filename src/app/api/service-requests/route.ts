@@ -7,6 +7,8 @@ import {
   forbidden,
   badRequest,
   serverError,
+  checkRateLimit,
+  tooManyRequests,
 } from '@/lib/api-helpers'
 
 export async function POST(request: Request) {
@@ -19,6 +21,9 @@ export async function POST(request: Request) {
   if (profile.is_banned) {
     return forbidden('banned')
   }
+
+  const rateLimited = await checkRateLimit(supabase, 'service_requests', 'customer_id', user.id, 60_000, 3)
+  if (rateLimited) return tooManyRequests()
 
   let body: Record<string, unknown>
   try {

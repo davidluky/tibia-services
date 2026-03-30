@@ -6,7 +6,7 @@ import { timeAgo } from '@/lib/utils'
 import type { Notification } from '@/lib/types'
 
 export function NotificationBell() {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -86,13 +86,13 @@ export function NotificationBell() {
                     <Link href={n.link} className="block" onClick={() => setOpen(false)}>
                       <p className="text-sm text-text-primary font-medium">{n.title}</p>
                       {n.body && <p className="text-xs text-text-muted mt-0.5">{n.body}</p>}
-                      <p className="text-xs text-text-muted/60 mt-1">{timeAgo(n.created_at)}</p>
+                      <p className="text-xs text-text-muted/60 mt-1">{timeAgo(n.created_at, lang)}</p>
                     </Link>
                   ) : (
                     <div>
                       <p className="text-sm text-text-primary font-medium">{n.title}</p>
                       {n.body && <p className="text-xs text-text-muted mt-0.5">{n.body}</p>}
-                      <p className="text-xs text-text-muted/60 mt-1">{timeAgo(n.created_at)}</p>
+                      <p className="text-xs text-text-muted/60 mt-1">{timeAgo(n.created_at, lang)}</p>
                     </div>
                   )}
                 </div>

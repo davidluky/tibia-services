@@ -27,7 +27,7 @@ const STATUS_VARIANTS: Record<string, string> = {
 }
 
 export function BookingThread({ booking: initialBooking, currentUserId, currentUserRole, dispute }: BookingThreadProps) {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const supabase = createClient()
   const [booking, setBooking] = useState(initialBooking)
   const [messages, setMessages] = useState<Message[]>([])
@@ -244,7 +244,7 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
                         </p>
                       )}
                       <p className="text-sm">{msg.content}</p>
-                      <p className="text-xs text-text-muted/60 mt-1 text-right">{timeAgo(msg.created_at)}</p>
+                      <p className="text-xs text-text-muted/60 mt-1 text-right">{timeAgo(msg.created_at, lang)}</p>
                     </div>
                   </div>
                 )

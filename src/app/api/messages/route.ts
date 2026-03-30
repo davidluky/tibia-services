@@ -6,6 +6,8 @@ import {
   forbidden,
   notFound,
   serverError,
+  checkRateLimit,
+  tooManyRequests,
 } from '@/lib/api-helpers'
 import { sanitizeText } from '@/lib/utils'
 
@@ -42,6 +44,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
+
+  const rateLimited = await checkRateLimit(supabase, 'messages', 'sender_id', user.id, 60_000, 10)
+  if (rateLimited) return tooManyRequests()
 
   const body = await request.json()
   const { booking_id, content } = body
