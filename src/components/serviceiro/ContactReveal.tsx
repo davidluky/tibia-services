@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
+import { useLanguage } from '@/lib/language-context'
 
 interface ContactRevealProps {
   serviceiroId: string
@@ -8,6 +9,7 @@ interface ContactRevealProps {
 }
 
 export function ContactReveal({ serviceiroId, isLoggedIn }: ContactRevealProps) {
+  const { t } = useLanguage()
   const [contact, setContact] = useState<{ whatsapp: string; discord: string } | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -34,7 +36,7 @@ export function ContactReveal({ serviceiroId, isLoggedIn }: ContactRevealProps) 
       setContact(data)
       setLoading(false)
     } catch {
-      setError('Erro ao carregar contato.')
+      setError(t('featured_error_generic'))
       setLoading(false)
     }
   }
@@ -42,7 +44,7 @@ export function ContactReveal({ serviceiroId, isLoggedIn }: ContactRevealProps) 
   if (contact) {
     return (
       <div className="bg-bg-primary border border-gold/20 rounded-xl p-5 space-y-3 animate-fade-in">
-        <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider">Contato</h3>
+        <h3 className="text-sm font-semibold text-text-muted uppercase tracking-wider">{t('contact_title')}</h3>
         <div className="flex items-center gap-3">
           <span className="text-lg">📱</span>
           <div>
@@ -65,12 +67,12 @@ export function ContactReveal({ serviceiroId, isLoggedIn }: ContactRevealProps) 
     <div className="border border-border rounded-xl p-5">
       <p className="text-sm text-text-muted mb-4">
         {isLoggedIn
-          ? 'Faça uma reserva para revelar o contato do serviceiro.'
-          : 'Entre na sua conta para ver o contato.'}
+          ? t('contact_prompt_booked')
+          : t('contact_prompt_login')}
       </p>
       {error && <p className="text-status-error text-xs mb-3">{error}</p>}
       <Button onClick={handleReveal} loading={loading} className="w-full">
-        {isLoggedIn ? 'Ver Contato' : 'Entrar para ver'}
+        {isLoggedIn ? t('contact_reveal_btn') : t('contact_login_btn')}
       </Button>
     </div>
   )

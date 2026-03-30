@@ -43,6 +43,13 @@ The code is 100% ready. You just need to set up the external services.
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
    ```
+4. Additional environment variables needed:
+   ```
+   RESEND_API_KEY=your-resend-api-key
+   RESEND_FROM_EMAIL=noreply@yourdomain.com
+   APP_URL=http://localhost:3000
+   CHAR_VERIFY_SECRET=a-random-secret-string
+   ```
 
 ---
 
@@ -72,7 +79,15 @@ The code is 100% ready. You just need to set up the external services.
 
 ---
 
-## Step 8 — Install and run the project
+## Step 8 — Run migration files
+
+1. In Supabase dashboard → **SQL Editor** → New query
+2. Run all migration files in `supabase/migrations/` in order (001 through 006)
+3. Each file builds on the previous — run them sequentially and verify "Success" for each
+
+---
+
+## Step 9 — Install and run the project
 
 Open a terminal in the project folder and run:
 
@@ -85,7 +100,7 @@ Then open your browser at: **http://localhost:3000**
 
 ---
 
-## Step 9 — Create your admin account
+## Step 10 — Create your admin account
 
 1. Register a normal account on the site
 2. Go to Supabase dashboard → **SQL Editor** → New query
@@ -99,7 +114,7 @@ Then open your browser at: **http://localhost:3000**
 
 ---
 
-## Step 10 — Deploy online (optional)
+## Step 11 — Deploy online (optional)
 
 1. Create a free account at https://vercel.com
 2. Push the project to GitHub

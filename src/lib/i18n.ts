@@ -331,6 +331,35 @@ const translations = {
     analytics_by_type: 'Por tipo de servi\u00e7o',
     dashboard_analytics: 'Estat\u00edsticas \u2192',
     requests_match_badge: 'Match \u2713',
+
+    // FeaturedListingCard
+    featured_card_title: 'Destaque de Perfil',
+    featured_active_msg: 'Seu perfil est\u00e1 em destaque!',
+    featured_valid_until: 'V\u00e1lido at\u00e9',
+    featured_days_remaining: 'dias restantes',
+    featured_extend_note: 'Para estender, solicite novo destaque ap\u00f3s expirar.',
+    featured_pending_msg: 'Aguardando confirma\u00e7\u00e3o do pagamento.',
+    featured_send_exact: 'Envie exatamente:',
+    featured_to_char: 'para o personagem',
+    featured_expires_in: 'Seu pedido expira em',
+    featured_cancel_btn: 'Cancelar pedido',
+    featured_timed_out: 'Pagamento n\u00e3o confirmado a tempo.',
+    featured_request_new: 'Solicitar novo destaque',
+    featured_promo_text: 'Destaque seu perfil no topo da lista de busca.',
+    featured_days_label: 'Dias de destaque:',
+    featured_instructions: 'Ap\u00f3s solicitar, envie o pagamento em TC in-game.',
+    featured_submit_btn: 'Solicitar Destaque',
+    featured_error_generic: 'Erro ao solicitar destaque.',
+    featured_toast_success: 'Destaque solicitado com sucesso!',
+    featured_toast_cancelled: 'Destaque cancelado.',
+    featured_error_cancel: 'Erro ao cancelar.',
+
+    // ContactReveal
+    contact_title: 'Contato',
+    contact_prompt_booked: 'Fa\u00e7a uma reserva ativa para revelar o contato.',
+    contact_prompt_login: 'Entre na sua conta para ver o contato.',
+    contact_reveal_btn: 'Ver Contato',
+    contact_login_btn: 'Entrar para ver',
   },
 
   en: {
@@ -638,6 +667,35 @@ const translations = {
     analytics_by_type: 'By service type',
     dashboard_analytics: 'Analytics \u2192',
     requests_match_badge: 'Match \u2713',
+
+    // FeaturedListingCard
+    featured_card_title: 'Profile Spotlight',
+    featured_active_msg: 'Your profile is featured!',
+    featured_valid_until: 'Valid until',
+    featured_days_remaining: 'days remaining',
+    featured_extend_note: 'To extend, request a new spotlight after it expires.',
+    featured_pending_msg: 'Awaiting payment confirmation.',
+    featured_send_exact: 'Send exactly:',
+    featured_to_char: 'to the character',
+    featured_expires_in: 'Your request expires in',
+    featured_cancel_btn: 'Cancel request',
+    featured_timed_out: 'Payment not confirmed in time.',
+    featured_request_new: 'Request new spotlight',
+    featured_promo_text: 'Feature your profile at the top of search results.',
+    featured_days_label: 'Spotlight days:',
+    featured_instructions: 'After requesting, send TC payment in-game.',
+    featured_submit_btn: 'Request Spotlight',
+    featured_error_generic: 'Error requesting spotlight.',
+    featured_toast_success: 'Spotlight requested successfully!',
+    featured_toast_cancelled: 'Spotlight cancelled.',
+    featured_error_cancel: 'Error cancelling.',
+
+    // ContactReveal
+    contact_title: 'Contact',
+    contact_prompt_booked: 'Book an active service to reveal contact info.',
+    contact_prompt_login: 'Log in to see contact info.',
+    contact_reveal_btn: 'Reveal Contact',
+    contact_login_btn: 'Log in to see',
   },
 
   es: {
@@ -945,6 +1003,35 @@ const translations = {
     analytics_by_type: 'Por tipo de servicio',
     dashboard_analytics: 'Estad\u00edsticas \u2192',
     requests_match_badge: 'Match \u2713',
+
+    // FeaturedListingCard
+    featured_card_title: 'Destacar Perfil',
+    featured_active_msg: '\u00a1Tu perfil est\u00e1 destacado!',
+    featured_valid_until: 'V\u00e1lido hasta',
+    featured_days_remaining: 'd\u00edas restantes',
+    featured_extend_note: 'Para extender, solicita un nuevo destaque.',
+    featured_pending_msg: 'Esperando confirmaci\u00f3n del pago.',
+    featured_send_exact: 'Env\u00eda exactamente:',
+    featured_to_char: 'al personaje',
+    featured_expires_in: 'Tu solicitud expira en',
+    featured_cancel_btn: 'Cancelar solicitud',
+    featured_timed_out: 'Pago no confirmado a tiempo.',
+    featured_request_new: 'Solicitar nuevo destaque',
+    featured_promo_text: 'Destaca tu perfil en la parte superior de los resultados.',
+    featured_days_label: 'D\u00edas de destaque:',
+    featured_instructions: 'Despu\u00e9s de solicitar, env\u00eda el pago en TC in-game.',
+    featured_submit_btn: 'Solicitar Destaque',
+    featured_error_generic: 'Error al solicitar destaque.',
+    featured_toast_success: '\u00a1Destaque solicitado con \u00e9xito!',
+    featured_toast_cancelled: 'Destaque cancelado.',
+    featured_error_cancel: 'Error al cancelar.',
+
+    // ContactReveal
+    contact_title: 'Contacto',
+    contact_prompt_booked: 'Reserva un servicio activo para revelar el contacto.',
+    contact_prompt_login: 'Inicia sesi\u00f3n para ver el contacto.',
+    contact_reveal_btn: 'Ver Contacto',
+    contact_login_btn: 'Entrar para ver',
   },
 }
 

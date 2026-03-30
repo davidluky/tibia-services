@@ -94,35 +94,15 @@ WHERE id = (
 
 ---
 
-## Change the site language to English
+## Change or add a language
 
-The UI is in Portuguese. To switch to English:
-1. Search for Portuguese strings in `src/` — they appear as hardcoded text in `.tsx` files
-2. Replace them with English equivalents
-3. Update `lang="pt-BR"` to `lang="en"` in `src/app/layout.tsx`
-4. Update date formatting — in `src/lib/utils.ts`, change `'pt-BR'` to `'en-US'`
+The app supports 3 languages (PT, EN, ES) via `src/lib/i18n.ts`. Users switch languages via the LanguageSwitcher component in the navbar. To add a new language, add a new locale object in `src/lib/i18n.ts`.
 
 ---
 
-## Add email notifications on booking status changes
+## Modify email notifications
 
-1. Install Resend or SendGrid SDK:
-   ```bash
-   npm install resend
-   ```
-2. Create an API key at resend.com
-3. Add `RESEND_API_KEY` to `.env.local`
-4. In `src/app/api/bookings/[id]/route.ts`, after updating the booking status, send an email:
-   ```typescript
-   import { Resend } from 'resend'
-   const resend = new Resend(process.env.RESEND_API_KEY)
-   await resend.emails.send({
-     from: 'noreply@yoursite.com',
-     to: customerEmail,
-     subject: 'Sua reserva foi aceita',
-     html: '<p>...</p>',
-   })
-   ```
+Email notifications are already implemented in `src/lib/email.ts`. To modify email templates, edit the functions in that file. The email system uses Resend and requires `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, and `APP_URL` in `.env.local`.
 
 ---
 
