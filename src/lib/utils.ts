@@ -22,19 +22,40 @@ export function formatTC(amount: number): string {
 }
 
 // ─── Date/time helpers ────────────────────────────────────────────────────────
-// Format a UTC timestamp to a readable local date
-export function formatDate(isoString: string): string {
-  return new Date(isoString).toLocaleDateString('pt-BR', {
+// Format a UTC timestamp to a readable local date, locale-aware
+export function formatDate(isoString: string, lang = 'pt'): string {
+  const locale = lang === 'en' ? 'en-US' : lang === 'es' ? 'es-ES' : 'pt-BR'
+  return new Date(isoString).toLocaleDateString(locale, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   })
 }
 
-// How long ago (e.g. "3 hours ago")
-export function timeAgo(isoString: string): string {
+// How long ago (e.g. "3 hours ago"), locale-aware
+export function timeAgo(isoString: string, lang = 'pt'): string {
   const diff = Date.now() - new Date(isoString).getTime()
   const minutes = Math.floor(diff / 60000)
+
+  if (lang === 'en') {
+    if (minutes < 1) return 'now'
+    if (minutes < 60) return `${minutes} min ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    return `${days}d ago`
+  }
+
+  if (lang === 'es') {
+    if (minutes < 1) return 'ahora'
+    if (minutes < 60) return `hace ${minutes} min`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `hace ${hours}h`
+    const days = Math.floor(hours / 24)
+    return `hace ${days}d`
+  }
+
+  // Default: pt
   if (minutes < 1) return 'agora'
   if (minutes < 60) return `${minutes} min atrás`
   const hours = Math.floor(minutes / 60)
