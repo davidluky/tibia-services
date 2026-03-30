@@ -60,8 +60,8 @@ Deleting reviews loses the audit trail. Setting `is_visible = false` hides the r
 
 ## UI/UX Decisions
 
-### No real-time messaging (polling every 30s)
-Real-time requires WebSockets or Supabase Realtime, which has a connection limit on the free tier. 30-second polling is simpler, free-tier safe, and sufficient for this use case (negotiations are not time-critical).
+### Supabase Realtime for messaging
+Uses Supabase Realtime (postgres_changes) for message delivery with initial fetch. Booking state is refreshed after user actions.
 
 ### Portuguese UI
 Target audience is Brazilian Tibia players. All UI copy is in Portuguese (pt-BR). Dates and numbers use `pt-BR` locale.
@@ -74,11 +74,14 @@ Navbar collapses to hamburger on mobile. Browse page hides filter sidebar on mob
 
 ---
 
+## Completed Improvements
+
+- ~~Real-time messaging via Supabase Realtime~~ — DONE (postgres_changes subscriptions)
+- ~~Email notifications on booking status changes~~ — DONE (`src/lib/email.ts`, Resend)
+- ~~Dispute resolution flow~~ — DONE (disputes route + admin resolution)
+- ~~Tibia character verification via TibiaData API~~ — DONE (verify-character route, API v4)
+
 ## Future Improvements (not built)
 
-- Real-time messaging via Supabase Realtime (upgrade from polling)
-- Email notifications on booking status changes
-- Dispute resolution flow (currently handled off-platform)
-- Tibia character verification via TibiaData API (instead of manual screenshot review)
 - Search by server/world name
 - Serviceiro portfolio/images section

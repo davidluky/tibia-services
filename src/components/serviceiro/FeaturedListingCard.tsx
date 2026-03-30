@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { useLanguage } from '@/lib/language-context'
 import type { FeaturedListing } from '@/lib/types'
 
 const RECEIVING_CHARACTER = 'Cursos Senai'
@@ -29,6 +30,7 @@ function daysRemaining(expiresAt: string): number {
 }
 
 export function FeaturedListingCard() {
+  const { t } = useLanguage()
   const [listing, setListing] = useState<FeaturedListing | null | undefined>(undefined)
   const [days, setDays] = useState(1)
   const [submitting, setSubmitting] = useState(false)
@@ -68,14 +70,14 @@ export function FeaturedListingCard() {
         // non-JSON response — fall through to generic error
       }
       if (!res.ok) {
-        setError(data.error ?? 'Erro ao solicitar destaque.')
+        setError(data.error ?? t('featured_error_generic'))
         setSubmitting(false)
         return
       }
       fetchListing()
-      toast.success('Pedido criado! Envie os TCs para Cursos Senai.')
+      toast.success(t('featured_toast_success'))
     } catch {
-      setError('Erro de conexão. Tente novamente.')
+      setError(t('featured_error_generic'))
     }
     setSubmitting(false)
   }
@@ -89,7 +91,7 @@ export function FeaturedListingCard() {
       // Treat 404 and 409 as success (listing already gone or inactive)
       if (res.ok || res.status === 404 || res.status === 409) {
         setListing(null)
-        toast.success('Pedido cancelado.')
+        toast.success(t('featured_toast_cancelled'))
       } else {
         let data: { error?: string } = {}
         try {
@@ -97,10 +99,10 @@ export function FeaturedListingCard() {
         } catch {
           // non-JSON response — fall through to generic error
         }
-        setError(data.error ?? 'Erro ao cancelar.')
+        setError(data.error ?? t('featured_error_cancel'))
       }
     } catch {
-      setError('Erro de conexão. Tente novamente.')
+      setError(t('featured_error_cancel'))
     }
     setCanceling(false)
   }
@@ -118,18 +120,18 @@ export function FeaturedListingCard() {
 
   return (
     <Card className="p-6">
-      <h2 className="font-semibold text-text-primary mb-3">⭐ Destaque de Perfil</h2>
+      <h2 className="font-semibold text-text-primary mb-3">⭐ {t('featured_card_title')}</h2>
 
       {/* State 5: Active */}
       {listing && listing.status === 'active' && listing.expires_at && new Date(listing.expires_at) > new Date() && (
         <div className="space-y-2">
-          <p className="text-sm text-status-success font-medium">✓ Seu perfil está em destaque</p>
+          <p className="text-sm text-status-success font-medium">✓ {t('featured_active_msg')}</p>
           <p className="text-sm text-text-muted">
-            Válido até <span className="text-text-primary">{formatDate(listing.expires_at)}</span>
-            {' '}({daysRemaining(listing.expires_at)} dias restantes)
+            {t('featured_valid_until')} <span className="text-text-primary">{formatDate(listing.expires_at)}</span>
+            {' '}({daysRemaining(listing.expires_at)} {t('featured_days_remaining')})
           </p>
           <p className="text-xs text-text-muted mt-2">
-            Para estender, entre em contato com o admin após o vencimento.
+            {t('featured_extend_note')}
           </p>
         </div>
       )}
@@ -137,20 +139,20 @@ export function FeaturedListingCard() {
       {/* State 3: Pending within 24h */}
       {listing && listing.status === 'pending' && !isTimedOut(listing.requested_at) && (
         <div className="space-y-3">
-          <p className="text-sm text-text-primary font-medium">Aguardando confirmação do pagamento.</p>
+          <p className="text-sm text-text-primary font-medium">{t('featured_pending_msg')}</p>
           <div className="bg-bg-primary border border-border rounded-lg p-3 text-sm">
-            <p className="text-text-muted text-xs mb-1">Envie exatamente:</p>
+            <p className="text-text-muted text-xs mb-1">{t('featured_send_exact')}</p>
             <p className="text-gold font-bold font-mono">{listing.tc_amount} TC</p>
             <p className="text-text-muted text-xs mt-1">
-              para o personagem <span className="text-text-primary font-medium">{RECEIVING_CHARACTER}</span> em tibia.com
+              {t('featured_to_char')} <span className="text-text-primary font-medium">{RECEIVING_CHARACTER}</span>
             </p>
           </div>
           <p className="text-xs text-text-muted">
-            Seu pedido expira em <span className="text-text-primary">{hoursRemaining(listing.requested_at)}h</span>.
+            {t('featured_expires_in')} <span className="text-text-primary">{hoursRemaining(listing.requested_at)}h</span>.
           </p>
           {error && <p className="text-status-error text-sm">{error}</p>}
           <Button variant="danger" size="sm" onClick={handleCancel} loading={canceling} className="w-full">
-            Cancelar pedido
+            {t('featured_cancel_btn')}
           </Button>
         </div>
       )}
@@ -159,11 +161,11 @@ export function FeaturedListingCard() {
       {listing && listing.status === 'pending' && isTimedOut(listing.requested_at) && (
         <div className="space-y-3">
           <p className="text-sm text-text-muted">
-            Pagamento não confirmado em 24h. Pedido cancelado automaticamente.
+            {t('featured_timed_out')}
           </p>
           {error && <p className="text-status-error text-sm">{error}</p>}
           <Button size="sm" onClick={handleCancel} loading={canceling} className="w-full">
-            Solicitar novo destaque
+            {t('featured_request_new')}
           </Button>
         </div>
       )}
@@ -172,11 +174,11 @@ export function FeaturedListingCard() {
       {!listing && (
         <div className="space-y-3">
           <p className="text-sm text-text-muted">
-            Destaque seu perfil no topo da busca e apareça com um badge especial.
+            {t('featured_promo_text')}
           </p>
 
           <div className="flex items-center gap-3">
-            <label className="text-sm text-text-muted shrink-0">Dias de destaque:</label>
+            <label className="text-sm text-text-muted shrink-0">{t('featured_days_label')}</label>
             <input
               type="number"
               min={1}
@@ -190,18 +192,17 @@ export function FeaturedListingCard() {
           </div>
 
           <div className="bg-bg-primary border border-border rounded-lg p-3 text-sm">
-            <p className="text-text-muted text-xs mb-1">Após solicitar, envie exatamente:</p>
+            <p className="text-text-muted text-xs mb-1">{t('featured_instructions')}</p>
             <p className="text-gold font-bold font-mono">{tcAmount} TC</p>
             <p className="text-text-muted text-xs mt-1">
-              para o personagem <span className="text-text-primary font-medium">{RECEIVING_CHARACTER}</span> em tibia.com.
-              Seu perfil será destacado assim que o pagamento for confirmado (em até 24h).
+              {t('featured_to_char')} <span className="text-text-primary font-medium">{RECEIVING_CHARACTER}</span>
             </p>
           </div>
 
           {error && <p className="text-status-error text-sm">{error}</p>}
 
           <Button onClick={handleSubmit} loading={submitting} className="w-full">
-            Solicitar Destaque
+            {t('featured_submit_btn')}
           </Button>
         </div>
       )}

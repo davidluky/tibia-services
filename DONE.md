@@ -46,12 +46,39 @@ A complete full-stack marketplace website for Tibia game services.
 - Users table with search and ban/unban toggle
 - Reviews table with hide button
 
+**Notifications & email**
+- In-app notification system with bell icon (30s polling)
+- Email notifications on booking status changes (`src/lib/email.ts`, Resend)
+
+**Analytics**
+- Serviceiro analytics dashboard (KPIs, monthly chart, type breakdown)
+- Service request matching indicator for serviceiros
+
+**Character verification**
+- Character verification via TibiaData API v4 (comment-based proof)
+- Self-verification prevention (cannot verify your own character)
+
+**Disputes**
+- Dispute resolution flow: customer opens dispute, admin resolves (refund/release/split)
+
+**Reliability & security**
+- Error retry states for failed fetches
+- Rate limiting on bookings (3/min), messages (10/min), service requests (3/min)
+- Security hardening: role protection, self-verification prevention
+- Standardized API helpers (auth, errors, rate limiting)
+
+**Testing**
+- 24 unit tests (Jest + React Testing Library)
+
 **Tech files**
 - `supabase/schema.sql` — complete DB schema, RLS, triggers, indexes
+- `supabase/migrations/` — incremental migration files (001–006)
 - `src/lib/constants.ts` — vocations, gameplay types, weekdays, TC limits
 - `src/lib/types.ts` — all TypeScript types matching DB schema
 - `src/lib/utils.ts` — TC validation, date helpers, string helpers
 - `src/lib/supabase/` — browser, server, and admin clients
+- `src/lib/email.ts` — email notification functions (Resend)
+- `src/lib/i18n.ts` — internationalization (PT, EN, ES)
 
 ---
 
@@ -122,10 +149,9 @@ If build succeeds, it's ready for Vercel.
 
 ## Known Limitations
 
-- **No real-time chat** — messages refresh every 30 seconds (polling). Acceptable for negotiations, but not instant.
-- **No email notifications** — booking status changes do not send emails. See HOW-TO-CHANGE.md to add this.
-- **No character verification via API** — the Registered badge requires manual review of a screenshot. An improvement would be to verify via TibiaData API.
-- **No dispute resolution** — if a booking goes wrong, there is no formal dispute flow. Parties must resolve off-platform.
+- **Realtime messaging via Supabase subscriptions** — uses initial fetch + INSERT subscription (postgres_changes). Not full bidirectional sync.
+- **Character verification requires TibiaData API comment check** — the user must place a secret code in their Tibia.com character comment, then the API verifies it.
+- **Admin pages are Portuguese-only** — no i18n for server components (admin panel).
 - **Timezone display** — times are shown in the serviceiro's selected UTC offset but not automatically converted to the viewer's timezone.
 
 ---
