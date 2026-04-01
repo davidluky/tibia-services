@@ -28,14 +28,14 @@ Supabase is the database + auth + file storage for this project.
 3. Click **New project**
 4. Fill in:
    - **Name:** `tibia-services`
-   - **Database Password:** choose a strong password and **save it somewhere safe** l03dF9LY9bZU9O9j
+   - **Database Password:** choose a strong password and **save it somewhere safe**
    - **Region:** pick the one closest to Brazil (South America - São Paulo)
 5. Click **Create new project** — wait about 1 minute for it to set up
 6. Once ready, go to the left menu → **Project Settings** → **API**
 7. Copy and save these 3 values (you'll need them in Step 5):
-   - **Project URL** — looks like `https://abcdefgh.supabase.co`                             https://REDACTED_PROJECT_ID.supabase.co
-   - **anon / public** key — a long string starting with `eyJ...`                            REDACTED_ANON_KEY
-   - **service_role** key — another long string (⚠️ keep this private, never share it)      REDACTED_SERVICE_ROLE_KEY
+   - **Project URL** — looks like `https://abcdefgh.supabase.co`
+   - **anon / public** key — a long string starting with `eyJ...`
+   - **service_role** key — another long string (⚠️ keep this private, never share it)
 
 ---
 
