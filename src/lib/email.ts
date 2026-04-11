@@ -1,7 +1,12 @@
 import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let _resend: Resend | null = null
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 're_your_api_key_here') return null
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
+  return _resend
+}
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'noreply@tibia-services.com'
 const BASE_URL = process.env.APP_URL ?? 'http://localhost:3000'
 
@@ -68,7 +73,8 @@ export async function sendBookingCreated(opts: {
   try {
     const to = await getEmail(opts.serviceiroId)
     if (!to) return
-    await resend.emails.send({
+    const r = getResend(); if (!r) return
+    await r.emails.send({
       from: FROM,
       to,
       subject: `Nova reserva de ${opts.customerName}`,
@@ -92,7 +98,8 @@ export async function sendBookingAccepted(opts: {
   try {
     const to = await getEmail(opts.customerId)
     if (!to) return
-    await resend.emails.send({
+    const r = getResend(); if (!r) return
+    await r.emails.send({
       from: FROM,
       to,
       subject: `${opts.serviceiroName} aceitou sua reserva`,
@@ -116,7 +123,8 @@ export async function sendBookingDeclined(opts: {
   try {
     const to = await getEmail(opts.customerId)
     if (!to) return
-    await resend.emails.send({
+    const r = getResend(); if (!r) return
+    await r.emails.send({
       from: FROM,
       to,
       subject: `${opts.serviceiroName} recusou sua reserva`,
@@ -139,7 +147,8 @@ export async function sendBookingCompleted(opts: {
   try {
     const to = await getEmail(opts.customerId)
     if (!to) return
-    await resend.emails.send({
+    const r = getResend(); if (!r) return
+    await r.emails.send({
       from: FROM,
       to,
       subject: `Reserva concluída — avalie ${opts.serviceiroName}`,
@@ -163,7 +172,8 @@ export async function sendBookingCancelled(opts: {
   try {
     const to = await getEmail(opts.recipientId)
     if (!to) return
-    await resend.emails.send({
+    const r = getResend(); if (!r) return
+    await r.emails.send({
       from: FROM,
       to,
       subject: `Reserva cancelada por ${opts.cancellerName}`,
