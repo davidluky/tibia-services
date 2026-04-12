@@ -26,10 +26,26 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-.env*.local
+.env
+.env.*
+!.env.example
+
+# Cloudflare wrangler dev-time secrets and build artifacts
+.dev.vars
+.wrangler/
+.open-next/
+
+# Secrets & certificates
+*.key
+*.p12
+*service-account*.json
 
 # vercel
 .vercel
+
+# development artifacts
+.superpowers/
+.claude/
 
 # typescript
 *.tsbuildinfo
