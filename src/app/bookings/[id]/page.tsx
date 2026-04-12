@@ -4,10 +4,11 @@ import { BookingThread } from '@/components/booking/BookingThread'
 import { ReviewForm } from '@/components/review/ReviewForm'
 
 interface PageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-export default async function BookingDetailPage({ params }: PageProps) {
+export default async function BookingDetailPage(props: PageProps) {
+  const params = await props.params;
   const supabase = createClient()
 
   const { data: { user } } = await supabase.auth.getUser()

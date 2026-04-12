@@ -96,16 +96,17 @@ async function getAllServiceiros(): Promise<ServiceiroWithProfile[]> {
 }
 
 interface BrowsePageProps {
-  searchParams: {
+  searchParams: Promise<{
     search?: string
     vocations?: string
     gameplay_types?: string
     weekdays?: string
     registered_only?: string
-  }
+  }>
 }
 
-export default async function BrowsePage({ searchParams }: BrowsePageProps) {
+export default async function BrowsePage(props: BrowsePageProps) {
+  const searchParams = await props.searchParams;
   const serviceiros = await getAllServiceiros()
 
   const initialFilters = {

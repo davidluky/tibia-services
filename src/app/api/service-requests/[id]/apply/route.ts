@@ -10,10 +10,8 @@ import {
   serverError,
 } from '@/lib/api-helpers'
 
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 

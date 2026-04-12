@@ -9,10 +9,8 @@ import {
   serverError,
 } from '@/lib/api-helpers'
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { user } = await getAuthUser()
   if (!user) return unauthorized()
 
