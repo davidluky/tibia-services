@@ -21,7 +21,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem('tibia_lang') as Locale | null
-      if (saved && ['pt', 'en', 'es'].includes(saved)) setLangState(saved)
+      if (saved && ['pt', 'en', 'es'].includes(saved)) {
+        setLangState(saved)
+        // Ensure cookie stays in sync on page load (needed for server components)
+        try { document.cookie = `tibia_lang=${saved}; path=/; max-age=31536000; SameSite=Lax` } catch { /* ignore */ }
+      }
     } catch {
       // localStorage unavailable (private browsing) — stay on 'pt'
     }
@@ -33,6 +37,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const setLang = (l: Locale) => {
     setLangState(l)
     try { localStorage.setItem('tibia_lang', l) } catch { /* ignore */ }
+    // Mirror to cookie so server components (e.g. admin panel) can read it.
+    // 1 year, Lax — this is a UI preference, not a security-sensitive value.
+    try { document.cookie = `tibia_lang=${l}; path=/; max-age=31536000; SameSite=Lax` } catch { /* ignore */ }
   }
 
   const t = (key: string) => getTranslation(effectiveLang, key as TranslationKey)

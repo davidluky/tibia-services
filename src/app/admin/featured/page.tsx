@@ -1,18 +1,24 @@
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getServerLocale, getServerT } from '@/lib/i18n-server'
+import { type Locale } from '@/lib/i18n'
 import { FeaturedConfirmForm } from './FeaturedConfirmForm'
 
 function hoursAgo(iso: string): number {
   return Math.floor((Date.now() - new Date(iso).getTime()) / (60 * 60 * 1000))
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('pt-BR', {
+const LOCALE_MAP: Record<Locale, string> = { pt: 'pt-BR', en: 'en-US', es: 'es-ES' }
+
+function formatDate(iso: string, locale: Locale): string {
+  return new Date(iso).toLocaleDateString(LOCALE_MAP[locale], {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
   })
 }
 
 export default async function AdminFeaturedPage() {
   const admin = createAdminClient()
+  const t = await getServerT()
+  const locale = await getServerLocale()
 
   const { data: pending } = await admin
     .from('featured_listings')
@@ -31,13 +37,13 @@ export default async function AdminFeaturedPage() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-text-primary mb-6">Destaques</h2>
+      <h2 className="text-2xl font-bold text-text-primary mb-6">{t('admin_featured_title')}</h2>
 
       {/* Pending payments */}
       <section className="mb-10">
-        <h3 className="text-lg font-semibold text-text-primary mb-4">Pagamentos pendentes</h3>
+        <h3 className="text-lg font-semibold text-text-primary mb-4">{t('admin_featured_pending_section')}</h3>
         {!pending || pending.length === 0 ? (
-          <p className="text-text-muted text-sm">Nenhum pagamento pendente.</p>
+          <p className="text-text-muted text-sm">{t('admin_featured_no_pending')}</p>
         ) : (
           <div className="space-y-4">
             {pending.map((listing) => {
@@ -54,12 +60,12 @@ export default async function AdminFeaturedPage() {
                         {serviceiro?.display_name ?? '—'}
                       </p>
                       <p className="text-xs text-text-muted">
-                        {listing.tc_amount} TC · {listing.days_requested} dias
-                        {' '}· solicitado há {hoursAgo(listing.requested_at)}h
+                        {listing.tc_amount} TC · {listing.days_requested} {t('admin_featured_days')}
+                        {' '}· {t('admin_featured_requested_ago')} {hoursAgo(listing.requested_at)}h
                       </p>
                     </div>
                     {timedOut ? (
-                      <span className="text-xs text-text-muted italic shrink-0">Expirado — não pago</span>
+                      <span className="text-xs text-text-muted italic shrink-0">{t('admin_featured_expired')}</span>
                     ) : (
                       <FeaturedConfirmForm listingId={listing.id} />
                     )}
@@ -73,9 +79,9 @@ export default async function AdminFeaturedPage() {
 
       {/* Active featured listings */}
       <section>
-        <h3 className="text-lg font-semibold text-text-primary mb-4">Destaques ativos</h3>
+        <h3 className="text-lg font-semibold text-text-primary mb-4">{t('admin_featured_active_section')}</h3>
         {!active || active.length === 0 ? (
-          <p className="text-text-muted text-sm">Nenhum destaque ativo.</p>
+          <p className="text-text-muted text-sm">{t('admin_featured_no_active')}</p>
         ) : (
           <div className="space-y-3">
             {active.map((listing) => {
@@ -86,8 +92,8 @@ export default async function AdminFeaturedPage() {
                     {serviceiro?.display_name ?? '—'}
                   </p>
                   <p className="text-xs text-text-muted">
-                    {listing.tc_amount} TC · {listing.days_requested} dias
-                    {listing.expires_at && ` · expira em ${formatDate(listing.expires_at)}`}
+                    {listing.tc_amount} TC · {listing.days_requested} {t('admin_featured_days')}
+                    {listing.expires_at && ` · ${t('admin_featured_expires_in')} ${formatDate(listing.expires_at, locale)}`}
                   </p>
                 </div>
               )
