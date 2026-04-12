@@ -1,15 +1,18 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate } from '@/lib/utils'
+import { getServerT } from '@/lib/i18n-server'
 import { HideReviewButton } from './HideReviewButton'
 import { Stars } from '@/components/ui/Stars'
 import { truncate } from '@/lib/utils'
 
-export default async function ReviewsPage({
-  searchParams,
-}: {
-  searchParams: { page?: string }
-}) {
+export default async function ReviewsPage(
+  props: {
+    searchParams: Promise<{ page?: string }>
+  }
+) {
+  const searchParams = await props.searchParams;
   const admin = createAdminClient()
+  const t = await getServerT()
   const page = Number(searchParams.page ?? 1)
   const perPage = 25
   const from = (page - 1) * perPage
@@ -29,23 +32,23 @@ export default async function ReviewsPage({
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-text-primary mb-6">Avaliações</h2>
+      <h2 className="text-2xl font-bold text-text-primary mb-6">{t('admin_reviews_title')}</h2>
 
       {!reviews || reviews.length === 0 ? (
-        <p className="text-text-muted">Nenhuma avaliação.</p>
+        <p className="text-text-muted">{t('admin_reviews_empty')}</p>
       ) : (
         <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-text-muted text-left">
-                  <th className="pb-3 pr-4">Revisor</th>
-                  <th className="pb-3 pr-4">Serviceiro</th>
-                  <th className="pb-3 pr-4">Nota</th>
-                  <th className="pb-3 pr-4">Comentário</th>
-                  <th className="pb-3 pr-4">Data</th>
-                  <th className="pb-3 pr-4">Visível</th>
-                  <th className="pb-3">Ação</th>
+                  <th className="pb-3 pr-4">{t('admin_reviews_col_reviewer')}</th>
+                  <th className="pb-3 pr-4">{t('admin_reviews_col_serviceiro')}</th>
+                  <th className="pb-3 pr-4">{t('admin_reviews_col_rating')}</th>
+                  <th className="pb-3 pr-4">{t('admin_reviews_col_comment')}</th>
+                  <th className="pb-3 pr-4">{t('admin_reviews_col_date')}</th>
+                  <th className="pb-3 pr-4">{t('admin_reviews_col_visible')}</th>
+                  <th className="pb-3">{t('admin_reviews_col_action')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -68,7 +71,7 @@ export default async function ReviewsPage({
                     <td className="py-3 pr-4 text-text-muted">{formatDate(review.created_at)}</td>
                     <td className="py-3 pr-4">
                       <span className={review.is_visible ? 'text-status-success' : 'text-status-error'}>
-                        {review.is_visible ? 'Sim' : 'Não'}
+                        {review.is_visible ? t('admin_yes') : t('admin_no')}
                       </span>
                     </td>
                     <td className="py-3">
@@ -83,11 +86,11 @@ export default async function ReviewsPage({
           {totalPages > 1 && (
             <div className="flex gap-2 mt-4 text-sm">
               {page > 1 && (
-                <a href={`?page=${page - 1}`} className="text-gold hover:text-gold-bright">← Anterior</a>
+                <a href={`?page=${page - 1}`} className="text-gold hover:text-gold-bright">{t('admin_page_prev')}</a>
               )}
-              <span className="text-text-muted">Página {page} de {totalPages}</span>
+              <span className="text-text-muted">{t('admin_page_of')} {page} {t('admin_page_of_total')} {totalPages}</span>
               {page < totalPages && (
-                <a href={`?page=${page + 1}`} className="text-gold hover:text-gold-bright">Próxima →</a>
+                <a href={`?page=${page + 1}`} className="text-gold hover:text-gold-bright">{t('admin_page_next')}</a>
               )}
             </div>
           )}
