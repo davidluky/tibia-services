@@ -16,10 +16,11 @@ import type { Review } from '@/lib/types'
 import type { GameplayTypeKey } from '@/lib/constants'
 
 interface PageProps {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata(props: PageProps) {
+  const params = await props.params;
   const supabase = createClient()
   const { data: profile } = await supabase
     .from('profiles')
@@ -45,7 +46,8 @@ export async function generateMetadata({ params }: PageProps) {
   }
 }
 
-export default async function ServiceiroProfilePage({ params }: PageProps) {
+export default async function ServiceiroProfilePage(props: PageProps) {
+  const params = await props.params;
   const supabase = createClient()
 
   // Get current user session

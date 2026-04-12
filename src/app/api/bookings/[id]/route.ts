@@ -21,10 +21,8 @@ async function notify(userId: string, type: string, title: string, body: string 
   await admin.from('notifications').insert({ user_id: userId, type, title, body, link })
 }
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
@@ -47,10 +45,8 @@ export async function GET(
   return NextResponse.json(booking)
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
