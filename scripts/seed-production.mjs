@@ -10,6 +10,14 @@ for (const line of envFile.split('\n')) {
   if (match) process.env[match[1].trim()] = match[2].trim();
 }
 
+// Safety guard: refuse to seed non-local databases unless --force
+const dbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+if (!dbUrl.includes('localhost') && !dbUrl.includes('127.0.0.1') && !process.argv.includes('--force')) {
+  console.error('ERROR: Refusing to seed non-local database. Use --force to override.')
+  console.error(`  Target: ${dbUrl}`)
+  process.exit(1)
+}
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY,

@@ -10,12 +10,24 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, role, display_name, bio, is_banned, created_at')
     .eq('id', user.id)
     .single()
 
   if (!profile) {
     redirect('/')
+  }
+
+  // Contact fields are column-locked via migration 007. Read through the
+  // SECURITY DEFINER helper — it returns only the caller's own row.
+  const { data: contact } = await supabase.rpc('my_contact_info').single<{
+    whatsapp: string | null
+    discord: string | null
+  }>()
+  const profileWithContact = {
+    ...profile,
+    whatsapp: contact?.whatsapp ?? null,
+    discord: contact?.discord ?? null,
   }
 
   const { data: sp } = await supabase
@@ -26,7 +38,7 @@ export default async function DashboardPage() {
 
   return (
     <DashboardClient
-      profile={profile}
+      profile={profileWithContact}
       serviceiroProfile={sp}
       userId={user.id}
     />

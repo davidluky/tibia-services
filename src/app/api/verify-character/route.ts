@@ -12,12 +12,17 @@ import {
 } from '@/lib/api-helpers'
 
 function generateVerificationCode(userId: string): string {
-  const secret = process.env.CHAR_VERIFY_SECRET ?? 'dev-secret'
+  const secret = process.env.CHAR_VERIFY_SECRET
+  if (!secret) throw new Error('CHAR_VERIFY_SECRET is not configured')
   const hmac = createHmac('sha256', secret).update(userId).digest('hex')
   return `TIBS-${hmac.slice(0, 8).toUpperCase()}`
 }
 
+// Guard: fail early if secret is missing
+const VERIFY_SECRET_AVAILABLE = !!process.env.CHAR_VERIFY_SECRET
+
 export async function GET() {
+  if (!VERIFY_SECRET_AVAILABLE) return serverError('Server misconfiguration')
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
@@ -48,6 +53,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!VERIFY_SECRET_AVAILABLE) return serverError('Server misconfiguration')
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
