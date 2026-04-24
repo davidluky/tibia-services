@@ -1,6 +1,6 @@
 # Tibia Services Marketplace
 
-Next.js 14 + Supabase + TypeScript marketplace for Tibia game services (hunting, quests, PK, bestiary). Pre-launch, feature-complete.
+Next.js 15 + Supabase + TypeScript marketplace for Tibia game services (hunting, quests, PK, bestiary). Pre-launch, feature-complete.
 
 ## Project Layout
 
@@ -51,7 +51,7 @@ src/
   __tests__/                     7 test files (Jest + React Testing Library)
 supabase/
   schema.sql                     Full database schema (tables, RLS, triggers, indexes, views)
-  migrations/                    Incremental migrations (001-006)
+  migrations/                    Incremental migrations (001-008)
   seed_mock*.sql                 Mock data for development
 ```
 
@@ -191,7 +191,7 @@ CHAR_VERIFY_SECRET=               # HMAC secret for character verification codes
 
 3 languages: PT (default), EN, ES. ~400 keys in `src/lib/i18n.ts` (1000+ lines). Language context in `language-context.tsx`, switcher component in `ui/LanguageSwitcher.tsx`.
 
-Admin panel is Portuguese-only (server components, no i18n).
+Admin panel supports PT/EN/ES via `getServerT()` (server-side i18n from cookie).
 
 ## Security
 

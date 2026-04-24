@@ -72,7 +72,7 @@ A complete full-stack marketplace website for Tibia game services.
 
 **Tech files**
 - `supabase/schema.sql` — complete DB schema, RLS, triggers, indexes
-- `supabase/migrations/` — incremental migration files (001–006)
+- `supabase/migrations/` — incremental migration files (001–008)
 - `src/lib/constants.ts` — vocations, gameplay types, weekdays, TC limits
 - `src/lib/types.ts` — all TypeScript types matching DB schema
 - `src/lib/utils.ts` — TC validation, date helpers, string helpers
@@ -151,7 +151,7 @@ If build succeeds, it's ready for Vercel.
 
 - **Realtime messaging via Supabase subscriptions** — uses initial fetch + INSERT subscription (postgres_changes). Not full bidirectional sync.
 - **Character verification requires TibiaData API comment check** — the user must place a secret code in their Tibia.com character comment, then the API verifies it.
-- **Admin pages are Portuguese-only** — no i18n for server components (admin panel).
+- **Admin panel supports PT/EN/ES** — server-side i18n via cookie-based `getServerT()` helper.
 - **Timezone display** — times are shown in the serviceiro's selected UTC offset but not automatically converted to the viewer's timezone.
 
 ---
