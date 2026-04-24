@@ -48,7 +48,7 @@ See [SETUP.md](SETUP.md) for the full 10-step beginner guide.
 
 ## Built With
 
-- [Next.js 14](https://nextjs.org/) -- App Router, Server Components, API Routes
+- [Next.js 15](https://nextjs.org/) -- App Router, Server Components, API Routes
 - [Supabase](https://supabase.com/) -- PostgreSQL, Auth, Storage, Row-Level Security
 - [TypeScript](https://www.typescriptlang.org/) -- End-to-end type safety
 - [Tailwind CSS](https://tailwindcss.com/) -- Utility-first styling with custom theme
