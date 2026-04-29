@@ -31,4 +31,18 @@ All migrations are in the `supabase/migrations/` directory.
 - Prevents serviceiro self-verification
 - Creates public_profiles view excluding contact info
 
-**Status:** PENDING — run all migrations before deploying
+### 007-contact-column-lockdown.sql (2026-04-12)
+- Revokes column-level SELECT on `whatsapp`/`discord` from anon + authenticated roles
+- Creates `my_contact_info()` SECURITY DEFINER function so users can read their own contact info (needed by dashboard edit form)
+- Enforces the design that contact info is only exposed via `/api/contact/[id]` after a booking check
+- Closes gap from migration 006 where `profiles_public_read` RLS policy granted SELECT on all columns
+
+### 008-booking-field-lockdown.sql (2026-04-12)
+- Creates `prevent_protected_booking_changes()` trigger on bookings table
+- Prevents participant ID changes after INSERT (`customer_id`, `serviceiro_id` are immutable)
+- Each confirmation boolean can only be toggled by its owning party (customer flags by customer, serviceiro flags by serviceiro)
+- Price changes automatically reset both `price_confirmed_by_*` flags to force renegotiation
+- `service_role` (admin client) bypasses all checks
+- Note: `status` and `completed_at` transitions are still API-enforced only (tracked as future hardening)
+
+**Status:** PENDING — run all 8 migrations in order before deploying
