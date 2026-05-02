@@ -20,7 +20,7 @@
 - Updated docs and notes:
   - `docs/FLIGHT-RECORDER.md`, `docs/RETRO.md`, `docs/MIGRATION-STEPS.md`, `docs/tech-notes.md`, `docs/design-decisions.md`, `docs/developer-guide.md`, `docs/version-history.md`, `docs/build-commands.md`, `docs/DEPLOY-CHECKLIST.md`, `CONTRIBUTING.md`, `CLAUDE.md`, and `NEXT-STEPS.md`.
 
-Main commit: pending.
+Main commit: `f51cfec` (`feat(security): harden marketplace contracts`).
 
 ## What's in progress
 
