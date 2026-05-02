@@ -3,6 +3,8 @@
 ## What was done
 
 - Continued the uncommitted Full Mode hardening batch for the Tibia Services marketplace.
+- Fixed the GitHub Actions Quality run failure on `master` after commit `3ab5a91`: Jest could not parse `jest.config.ts` in a clean `npm ci` environment because `ts-node` was not installed.
+- Converted Jest config to `jest.config.js`, added it to the lint target, and upgraded the workflow to Node 24-compatible `actions/checkout@v6` and `actions/setup-node@v6`.
 - Completed follow-up review fixes before commit:
   - Strengthened `supabase/migrations/009-contract-hardening.sql` so public booking updates now enforce service type/created-at immutability, final-state immutability, monotonic confirmation flags, active-only price changes, completed-state invariants, and no unrelated field changes during status transitions.
   - Replaced action rate limiting's route-level count/insert with the atomic `check_api_action_rate_limit()` RPC and changed `checkActionRateLimit()` to fail closed on persistence errors.
@@ -21,6 +23,7 @@
   - `docs/FLIGHT-RECORDER.md`, `docs/RETRO.md`, `docs/MIGRATION-STEPS.md`, `docs/tech-notes.md`, `docs/design-decisions.md`, `docs/developer-guide.md`, `docs/version-history.md`, `docs/build-commands.md`, `docs/DEPLOY-CHECKLIST.md`, `CONTRIBUTING.md`, `CLAUDE.md`, and `NEXT-STEPS.md`.
 
 Main commit: `f51cfec` (`feat(security): harden marketplace contracts`).
+CI fix commit: pending.
 
 ## What's in progress
 
@@ -36,6 +39,7 @@ Nothing is intentionally left in progress.
 ## Current state
 
 - `npm run quality`: PASS.
+- Clean `npm ci` followed by `npm run quality`: PASS.
 - `npm run lint`: PASS with zero warnings.
 - `npm run typecheck`: PASS.
 - `npm test -- --runInBand`: PASS, 63 tests across 8 suites.

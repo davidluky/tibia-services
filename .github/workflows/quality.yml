@@ -17,10 +17,10 @@ jobs:
       APP_URL: https://tibia.davidluky.com
       CHAR_VERIFY_SECRET: ci-character-verification-secret
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run lint
