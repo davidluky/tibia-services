@@ -9,14 +9,16 @@ import {
   forbidden,
   apiError,
   serverError,
+  parseJsonBody,
 } from '@/lib/api-helpers'
 
 export async function POST(request: NextRequest) {
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
-  const body = await request.json()
-  const { booking_id, reason } = body
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const { booking_id, reason } = parsed.data
 
   if (!booking_id || typeof booking_id !== 'string') {
     return badRequest('booking_id inválido.')
@@ -33,8 +35,8 @@ export async function POST(request: NextRequest) {
 
   if (!booking) return notFound('Reserva não encontrada.')
 
-  if (booking.customer_id !== user.id && booking.serviceiro_id !== user.id) {
-    return forbidden('Acesso negado.')
+  if (booking.customer_id !== user.id) {
+    return forbidden('Somente o cliente pode abrir disputa.')
   }
 
   if (booking.status !== 'active') {
@@ -43,36 +45,19 @@ export async function POST(request: NextRequest) {
 
   const admin = createAdminClient()
 
-  const { data: existing } = await admin
-    .from('disputes')
-    .select('id')
-    .eq('booking_id', booking_id)
-    .maybeSingle()
+  const { data: disputeId, error } = await admin.rpc('open_booking_dispute', {
+    p_booking_id: booking_id,
+    p_opened_by: user.id,
+    p_reason: sanitizeText(reason),
+  })
 
-  if (existing) {
-    return apiError('Já existe uma disputa para esta reserva.', 409)
-  }
-
-  const { data: dispute, error: insertError } = await admin
-    .from('disputes')
-    .insert({ booking_id, opened_by: user.id, reason: sanitizeText(reason as string) })
-    .select('id')
-    .single()
-
-  if (insertError || !dispute) {
-    return serverError('Erro ao criar disputa.')
-  }
-
-  const { error: updateError } = await admin
-    .from('bookings')
-    .update({ status: 'disputed' })
-    .eq('id', booking_id)
-
-  if (updateError) {
-    console.error('[disputes] Failed to update booking status, rolling back dispute:', updateError)
-    await admin.from('disputes').delete().eq('id', dispute.id)
+  if (error || !disputeId) {
+    if (error?.code === '23505') {
+      return apiError('Já existe uma disputa para esta reserva.', 409)
+    }
+    console.error('[disputes] Failed to open dispute:', error)
     return serverError('Erro ao abrir disputa. Tente novamente.')
   }
 
-  return NextResponse.json({ id: dispute.id })
+  return NextResponse.json({ id: disputeId })
 }

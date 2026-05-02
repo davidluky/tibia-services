@@ -5,15 +5,18 @@ import {
   badRequest,
   notFound,
   serverError,
+  parseJsonBody,
 } from '@/lib/api-helpers'
+import { sanitizeText } from '@/lib/utils'
 
 export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const auth = await requireAdmin()
   if (!auth.authorized) return unauthorized()
 
-  const body = await request.json()
-  const { action, admin_notes, fee_paid } = body
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const { action, admin_notes, fee_paid } = parsed.data
 
   if (admin_notes !== undefined && (typeof admin_notes !== 'string' || admin_notes.length > 1000)) {
     return badRequest('Notas inválidas.')
@@ -21,6 +24,9 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
   if (fee_paid !== undefined && typeof fee_paid !== 'boolean') {
     return badRequest('Valor inválido.')
   }
+  const sanitizedAdminNotes = typeof admin_notes === 'string' && admin_notes.trim()
+    ? sanitizeText(admin_notes)
+    : null
 
   // Fetch the request
   const { data: req } = await auth.adminClient
@@ -35,7 +41,7 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
     // Update verification request
     const { error: verifyError } = await auth.adminClient.from('verification_requests').update({
       status: 'approved',
-      admin_notes: admin_notes || null,
+      admin_notes: sanitizedAdminNotes,
       fee_paid: fee_paid ?? false,
       reviewed_at: new Date().toISOString(),
       reviewed_by: auth.user.id,
@@ -52,7 +58,7 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
   } else if (action === 'reject') {
     const { error: rejectError } = await auth.adminClient.from('verification_requests').update({
       status: 'rejected',
-      admin_notes: admin_notes || null,
+      admin_notes: sanitizedAdminNotes,
       fee_paid: fee_paid ?? false,
       reviewed_at: new Date().toISOString(),
       reviewed_by: auth.user.id,

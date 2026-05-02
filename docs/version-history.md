@@ -94,7 +94,7 @@ Core marketplace functionality:
 - File upload MIME validation and size limits
 - Ban system with RLS enforcement
 - Error retry states for failed fetches
-- 24 unit tests (Jest + React Testing Library)
+- Jest + React Testing Library regression coverage for helpers, constants, localization, sanitization, and validation logic
 - Analytics dashboard for serviceiros (KPIs, monthly chart, type breakdown)
 
 ## Contact Column Lockdown
@@ -112,6 +112,18 @@ Core marketplace functionality:
 - Automatic price confirmation reset on renegotiation
 - Closes column-level access gap for direct supabase-js calls
 
+## Contract Hardening
+
+- Database-layer contract enforcement (migration: `009-contract-hardening.sql`)
+- Serviceiro profile policies require serviceiro role and non-banned profile
+- Registration and character verification fields are protected from self-modification
+- Booking INSERT/UPDATE trigger enforces initial state, self-booking prevention, service type validity/immutability, TC bounds, participant immutability, owned monotonic confirmation flags, price confirmation resets, final-state immutability, and status/`completed_at` transitions
+- Review inserts must match the completed booking being reviewed
+- Featured listings cannot be self-activated by public clients
+- Added `api_rate_limits` ledger table and atomic RPC for API routes that need rate limiting without a natural write row
+- Public dispute inserts are disabled; customer-only dispute creation goes through atomic open/resolve functions that keep dispute rows and booking statuses synchronized
+- Cloudflare package builds are available through `npm run package`
+
 ## Multi-Lingual Admin Panel
 
 - Admin server components now support PT/EN/ES via `getServerT()` helper
@@ -124,9 +136,24 @@ Core marketplace functionality:
 - Upgraded from Next.js 14 to Next.js 15
 - Closed 4 high-severity DoS advisories
 
+## Verification Upload Hardening
+
+- Identity verification uploads now flow through `POST /api/verification`; the server uploads screenshot and ID files with the admin Supabase client
+- Private Supabase Storage bucket is `verifications`
+- Verification request rows store private storage paths, not public file URLs
+- Admin verification detail creates short-lived signed URLs for review previews
+
+## Deployment Documentation Audit
+
+- Setup and deployment docs now define the canonical database state as `supabase/schema.sql` plus all numbered migrations
+- Setup and deployment docs list all 7 required environment variables
+- Production admin bootstrap docs require a confirmed Supabase Auth user ID
+- Test documentation avoids hard-coded totals; run `npm test` for the current count
+- Migration 009 is included in the canonical migration list
+
 ## Current State
 
 Feature-complete marketplace ready for deployment. All core flows working:
 - Auth, browsing, booking, chat, reviews, verification, disputes, featured listings, service requests, notifications, analytics, admin panel.
 - 3-language i18n (including admin panel), email notifications, rate limiting, RLS security.
-- 8 incremental migrations (001-008) hardening schema beyond initial RLS policies.
+- Canonical database state is `supabase/schema.sql` plus 9 incremental migrations (001-009) hardening schema beyond initial RLS policies.

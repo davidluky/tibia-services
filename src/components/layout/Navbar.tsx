@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useId, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { useLanguage } from '@/lib/language-context'
@@ -10,7 +10,8 @@ import { NotificationBell } from './NotificationBell'
 export function Navbar() {
   const [user, setUser] = useState<User | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const supabase = createClient()
+  const mobileMenuId = useId()
+  const supabase = useMemo(() => createClient(), [])
   const { t } = useLanguage()
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export function Navbar() {
       setUser(session?.user ?? null)
     })
     return () => subscription.unsubscribe()
-  }, [])
+  }, [supabase])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -81,8 +82,11 @@ export function Navbar() {
 
         {/* Mobile hamburger */}
         <button
+          type="button"
           className="md:hidden text-text-muted hover:text-text-primary p-2"
-          onClick={() => setMenuOpen(!menuOpen)}
+          onClick={() => setMenuOpen(prev => !prev)}
+          aria-controls={mobileMenuId}
+          aria-expanded={menuOpen}
           aria-label="Toggle menu"
         >
           {menuOpen ? '✕' : '☰'}
@@ -91,7 +95,7 @@ export function Navbar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-border bg-bg-card px-4 py-4 flex flex-col gap-4">
+        <div id={mobileMenuId} className="md:hidden border-t border-border bg-bg-card px-4 py-4 flex flex-col gap-4">
           <Link href="/browse" className="text-text-muted hover:text-text-primary text-sm" onClick={() => setMenuOpen(false)}>
             {t('nav_browse')}
           </Link>

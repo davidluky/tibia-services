@@ -22,7 +22,11 @@ npm run dev                         # http://localhost:3000
 |---------|-------------|
 | `npm run dev` | Start dev server |
 | `npm run build` | Production build |
-| `npm run lint` | ESLint |
+| `npm run package` | Build and adapt the app for Cloudflare Workers |
+| `npm run lint` | ESLint CLI with zero-warning gate |
+| `npm run typecheck` | TypeScript check without emit |
+| `npm run audit` | npm dependency audit (moderate+) |
+| `npm run quality` | Lint, typecheck, tests, build, and audit |
 | `npm test` | Run all tests (Jest) |
 | `npm run test:watch` | Jest in watch mode |
 
@@ -42,8 +46,9 @@ The codebase is organized in 4 layers:
 1. Create `src/app/api/<domain>/route.ts`
 2. Use `getAuthUser()` or `requireAdmin()` from `api-helpers.ts`
 3. Use `createClient()` for RLS-respecting queries, `createAdminClient()` for admin operations
-4. Return responses via `apiError()`, `unauthorized()`, etc.
-5. Add rate limiting with `checkRateLimit()` if it's a write endpoint
+4. Parse JSON with `parseJsonBody()` so malformed payloads return 400s instead of uncaught errors
+5. Return responses via `apiError()`, `unauthorized()`, etc.
+6. Add rate limiting with `checkRateLimit()` for domain-row-backed writes or `checkActionRateLimit()` for action ledgers
 
 ### Adding a new component
 
@@ -56,12 +61,13 @@ The codebase is organized in 4 layers:
 
 1. Write SQL in a new file: `supabase/migrations/NNN-description.sql`
 2. Run in Supabase Dashboard SQL Editor
-3. Update `src/lib/types.ts` to match schema changes
-4. Update CLAUDE.md schema table
+3. Keep direct Supabase-client bypasses in mind: high-value business rules belong in RLS, triggers, or RPCs, not only in API route code
+4. Update `src/lib/types.ts` to match schema changes
+5. Update CLAUDE.md schema table and `docs/MIGRATION-STEPS.md`
 
 ## Testing
 
-7 test files in `src/__tests__/`:
+Regression tests live in `src/__tests__/`:
 - `api-helpers.test.ts` -- API helper functions
 - `constants.test.ts` -- Constants validation
 - `i18n.test.ts` -- Translation key completeness
@@ -69,14 +75,14 @@ The codebase is organized in 4 layers:
 - `tc-validation.test.ts` -- TC amount validation
 - `utils-locale.test.ts` -- Locale-aware utility functions
 - `utils.test.ts` -- General utility functions
+- `migration-contracts.test.ts` -- Static guards for database hardening migrations
 
 Run with `npm test`. Tests use Jest + React Testing Library.
 
 ## Deployment
 
 1. Push to GitHub
-2. Import in [Vercel](https://vercel.com)
-3. Add environment variables (see CLAUDE.md for the full list)
-4. Deploy
+2. Add environment variables (see CLAUDE.md for the full list)
+3. Deploy with Cloudflare Workers (`npm run package && npx opennextjs-cloudflare deploy`) or Vercel (`vercel --prod`)
 
-The `npm run build` command must succeed locally before deploying.
+The `npm run quality` command must succeed locally before deploying.

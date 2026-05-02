@@ -26,7 +26,7 @@ const config: Config = {
         },
         text: {
           primary: '#e8e8f0',
-          muted: '#6b6b8a',
+          muted: '#9a9ab8',
           gold: '#c8a84b',
         },
         status: {

@@ -7,11 +7,19 @@ import {
   badRequest,
   apiError,
   serverError,
+  checkActionRateLimit,
+  rejectOversizedRequest,
 } from '@/lib/api-helpers'
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024
+const MAX_MULTIPART_SIZE = 11 * 1024 * 1024
 
 export async function POST(request: NextRequest) {
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
+
+  const oversized = rejectOversizedRequest(request, MAX_MULTIPART_SIZE, { requireContentLength: true })
+  if (oversized) return oversized
 
   // Verify user is a serviceiro
   const { data: profile } = await supabase
@@ -36,12 +44,17 @@ export async function POST(request: NextRequest) {
     return apiError('Você já tem uma solicitação ativa.', 409)
   }
 
+  const rateLimited = await checkActionRateLimit(user.id, 'identity_verification_upload', 60 * 60_000, 3)
+  if (rateLimited) {
+    return apiError('Muitas solicitações. Aguarde antes de tentar novamente.', 429)
+  }
+
   const formData = await request.formData()
   const characterName = formData.get('character_name') as string
-  const screenshot = formData.get('screenshot') as File
-  const idDocument = formData.get('id_document') as File
+  const screenshot = formData.get('screenshot')
+  const idDocument = formData.get('id_document')
 
-  if (!characterName || !screenshot || !idDocument) {
+  if (!characterName || !(screenshot instanceof File) || !(idDocument instanceof File)) {
     return badRequest('Dados incompletos.')
   }
 
@@ -54,7 +67,6 @@ export async function POST(request: NextRequest) {
     return badRequest('Somente imagens JPG, PNG ou WebP são permitidas.')
   }
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
   if (screenshot.size > MAX_FILE_SIZE || idDocument.size > MAX_FILE_SIZE) {
     return badRequest('Arquivo muito grande. Máximo 5MB.')
   }

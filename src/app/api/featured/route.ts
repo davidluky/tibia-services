@@ -7,6 +7,7 @@ import {
   badRequest,
   apiError,
   serverError,
+  parseJsonBody,
 } from '@/lib/api-helpers'
 
 export async function GET() {
@@ -50,13 +51,9 @@ export async function POST(request: NextRequest) {
     return forbidden('Acesso negado.')
   }
 
-  let body: Record<string, unknown>
-  try {
-    body = await request.json()
-  } catch {
-    return badRequest('JSON inválido.')
-  }
-  const { tc_amount } = body
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const { tc_amount } = parsed.data
 
   if (
     typeof tc_amount !== 'number' ||

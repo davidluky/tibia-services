@@ -37,14 +37,11 @@ The code is 100% ready. You just need to set up the external services.
 
 1. In the project folder, find `.env.local.example`
 2. Make a copy of it named `.env.local` (remove the `.example`)
-3. Open `.env.local` and fill in the 3 values from Step 3:
+3. Open `.env.local` and fill in all 7 required values:
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-   ```
-4. Additional environment variables needed:
-   ```
    RESEND_API_KEY=your-resend-api-key
    RESEND_FROM_EMAIL=noreply@yourdomain.com
    APP_URL=http://localhost:3000
@@ -53,20 +50,22 @@ The code is 100% ready. You just need to set up the external services.
 
 ---
 
-## Step 5 — Run the database schema
+## Step 5 — Run the database schema and migrations
 
 1. In Supabase dashboard → **SQL Editor** → New query
 2. Open the file `supabase/schema.sql` from the project folder
 3. Copy all the contents and paste into the SQL Editor
 4. Click **Run** — you should see "Success"
+5. Run every numbered file in `supabase/migrations/` in order, from `001-...` through the latest file
 
 ---
 
-## Step 6 — Disable email confirmation (for development)
+## Step 6 — Configure email confirmation
 
 1. Supabase dashboard → **Authentication** → **Settings** → **Email**
-2. Turn OFF **"Enable email confirmations"**
-3. Save
+2. For local development only, you may turn OFF **"Enable email confirmations"**
+3. For production, keep email confirmation ON
+4. Save
 
 ---
 
@@ -79,15 +78,7 @@ The code is 100% ready. You just need to set up the external services.
 
 ---
 
-## Step 8 — Run migration files
-
-1. In Supabase dashboard → **SQL Editor** → New query
-2. Run all migration files in `supabase/migrations/` in order (001 through 006)
-3. Each file builds on the previous — run them sequentially and verify "Success" for each
-
----
-
-## Step 9 — Install and run the project
+## Step 8 — Install and run the project
 
 Open a terminal in the project folder and run:
 
@@ -100,26 +91,31 @@ Then open your browser at: **http://localhost:3000**
 
 ---
 
-## Step 10 — Create your admin account
+## Step 9 — Create your admin account
 
 1. Register a normal account on the site
 2. Go to Supabase dashboard → **SQL Editor** → New query
-3. Run this (replace the email with yours):
+3. Confirm the email in production, copy the verified `auth.users.id`, then promote by UUID:
    ```sql
    UPDATE profiles SET role = 'admin'
-   WHERE id = (SELECT id FROM auth.users WHERE email = 'your@email.com');
+   WHERE id = '00000000-0000-0000-0000-000000000000'
+   AND EXISTS (
+     SELECT 1 FROM auth.users
+     WHERE auth.users.id = profiles.id
+       AND auth.users.email_confirmed_at IS NOT NULL
+   );
    ```
 4. Log out and log back in
 5. Go to http://localhost:3000/admin
 
 ---
 
-## Step 11 — Deploy online (optional)
+## Step 10 — Deploy online (optional)
 
 1. Create a free account at https://vercel.com
 2. Push the project to GitHub
 3. In Vercel → **Add New Project** → import your repo
-4. Add the 3 environment variables (same as `.env.local`)
+4. Add all 7 environment variables from `.env.local.example`
 5. Click Deploy → your site will be live at a `.vercel.app` URL
 
 ---
@@ -131,6 +127,8 @@ Then open your browser at: **http://localhost:3000**
 | `npm install` | Install dependencies (run once) |
 | `npm run dev` | Start local development server |
 | `npm run build` | Check for errors / build for production |
+| `npm run package` | Build Cloudflare Workers artifact |
+| `npm run quality` | Run lint, typecheck, tests, build, and audit |
 
 ## Need help?
 

@@ -8,16 +8,18 @@ import {
   forbidden,
   apiError,
   serverError,
+  parseJsonBody,
 } from '@/lib/api-helpers'
 
 export async function POST(request: NextRequest) {
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
-  const body = await request.json()
-  const { booking_id, serviceiro_id, rating, comment } = body
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const { booking_id, serviceiro_id, rating, comment } = parsed.data
 
-  if (!booking_id || !serviceiro_id || !rating) {
+  if (typeof booking_id !== 'string' || typeof serviceiro_id !== 'string' || typeof rating !== 'number') {
     return badRequest('Dados inválidos.')
   }
 

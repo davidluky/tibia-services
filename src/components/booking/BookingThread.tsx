@@ -456,7 +456,7 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
         )}
 
         {/* Dispute form (only when active) */}
-        {booking.status === 'active' && (
+        {booking.status === 'active' && isCustomer && (
           <div>
             {!showDisputeForm ? (
               <Button

@@ -14,22 +14,31 @@ The browser client uses `createBrowserClient()` from `@supabase/ssr`. The server
 
 **Rule:** Never import `admin.ts` in any file that runs in the browser.
 
+## Canonical Database State
+
+The production database contract is `supabase/schema.sql` followed by every numbered migration in `supabase/migrations/`, in filename order. `schema.sql` is the base snapshot; migrations 001-009 carry the post-schema features and hardening, including character verification fields, disputes, featured listings, service requests, notifications, contact column lockdown, booking field lockdown, and contract hardening.
+
+Migration `009-contract-hardening.sql` moves booking `status` and `completed_at` transition enforcement to the database layer, tightens serviceiro/review/featured policies, protects verification fields from self-modification, and adds the `api_rate_limits` ledger table.
+
 ## Rate Limiting
 
-Implemented in `api-helpers.ts` via `checkRateLimit()`:
+Implemented in `api-helpers.ts` via two patterns:
 
 ```typescript
 checkRateLimit(supabase, table, userIdColumn, userId, windowMs, maxRequests)
+checkActionRateLimit(userId, action, windowMs, maxRequests)
 ```
 
-Queries the target table for rows matching the user within the time window. Returns `true` if the limit is exceeded.
+`checkRateLimit()` queries the target domain table for rows matching the user within the time window. `checkActionRateLimit()` writes to the `api_rate_limits` ledger from migration 009 and is used when the route needs throttling before a durable domain row exists.
 
 Current limits:
 - Bookings: 3 per minute
 - Messages: 10 per minute
 - Service requests: 3 per minute
+- Identity verification uploads: 3 per hour
+- TibiaData character verification attempts: 5 per 10 minutes
 
-This is a database-query-based approach (not in-memory counters), so it survives server restarts and works across multiple instances. The trade-off is an extra query per request.
+Both approaches are database-backed, so they survive server restarts and work across multiple instances. The trade-off is an extra query per protected request.
 
 ## Character Verification Flow
 
@@ -55,10 +64,12 @@ Used for verification requests (screenshot + ID document).
 - Bucket: `verifications` (private)
 - MIME validation: only image types accepted
 - Size limit: 5MB
-- Path format: `{userId}/{filename}`
-- Storage URLs constructed in code using Supabase Storage public URL helper
+- Path format: `{userId}/screenshot-{uuid}.{ext}` and `{userId}/id-{uuid}.{ext}`
+- Upload path: `POST /api/verification` receives the files as form data and uploads them server-side with the admin Supabase client. The browser does not write directly to Storage.
+- Database values: `verification_requests.screenshot_url` and `id_document_url` store private storage paths, not public URLs.
+- Admin review: `/admin/verifications/[id]` creates signed URLs from the private `verifications` bucket for preview; current signed URL TTL is 3600 seconds.
 
-Files are uploaded client-side via the Supabase Storage SDK, then the storage paths are sent to the API route.
+The bucket must remain private. Public access should not be enabled for identity documents.
 
 ## Booking State Machine
 
@@ -72,7 +83,7 @@ Status Transitions:
   disputed  → resolved   (admin resolves)
 ```
 
-Invalid transitions are blocked by the API route (`/api/bookings/[id]`).
+Invalid transitions are blocked in both the API route (`/api/bookings/[id]`) and the database trigger added by migration `009-contract-hardening.sql`. The trigger also keeps service type immutable, blocks post-final-state participant updates, keeps owner confirmation flags monotonic, and prevents status transitions from smuggling unrelated field changes. Dispute open/resolve transitions use atomic database functions so the `disputes` row and related booking status move together.
 
 ### Dual Confirmation Pattern
 
@@ -83,6 +94,10 @@ Three actions require both parties to confirm:
 3. **Completion:** both set `complete_by_*` = true. When both are true, status moves to `completed` and `completed_at` is set.
 
 If one party changes the proposed price, both confirmation flags reset.
+
+## Action Rate Limiting
+
+Routes that do not naturally create a domain row use `checkActionRateLimit()`. The helper calls the `check_api_action_rate_limit()` RPC from migration `009-contract-hardening.sql`, which serializes each `(user_id, action)` check with a transaction advisory lock, records the accepted attempt in the same transaction, and fails closed if the RPC errors.
 
 ## Featured Listings TC Calculation
 
@@ -109,6 +124,10 @@ Featured listings let serviceiros pay TC to boost their profile visibility.
 All send functions are fire-and-forget (never throw). Failures are logged to console.
 
 Email is fetched via the admin client's `auth.admin.getUserById()` since email is stored in `auth.users`, not in `profiles`.
+
+## Production Admin Bootstrap
+
+Production keeps Supabase email confirmation enabled. Bootstrap the first admin by confirming the account email, copying the user's `auth.users.id`, and updating `profiles.role` for that verified UUID only. Do not promote by email-only SQL; a verified user ID prevents accidental promotion of the wrong account if emails change or duplicate setup data exists.
 
 ## Contact Info Reveal
 

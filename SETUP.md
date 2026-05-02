@@ -1,6 +1,6 @@
 # Tibia Services — Setup Guide
 
-> Last reviewed: 2026-03-15
+> Last reviewed: 2026-04-30
 
 Complete step-by-step instructions to get this project running locally and deployed online.
 
@@ -39,26 +39,31 @@ Supabase is the database + auth + file storage for this project.
 
 ---
 
-## Step 3 — Run the database schema
+## Step 3 — Run the canonical database schema and migrations
 
-This creates all the tables, rules, and indexes in your Supabase database.
+This creates all the tables, rules, indexes, and post-launch hardening in your Supabase database. The canonical database state is `supabase/schema.sql` plus every numbered file in `supabase/migrations/`, run in order. `schema.sql` alone is not complete.
 
 1. In the Supabase dashboard, go to the left menu → **SQL Editor**
 2. Click **New query**
 3. Open the file `supabase/schema.sql` from this project
 4. Copy all the contents and paste it into the SQL Editor
 5. Click **Run** (or press Ctrl+Enter)
-6. You should see "Success. No rows returned" — that means it worked
+6. Then run each migration in `supabase/migrations/` in filename order (`001-...` through the latest file)
+7. You should see "Success. No rows returned" after each file — that means it worked
+
+See `docs/MIGRATION-STEPS.md` for the current migration list and hardening notes.
 
 ---
 
 ## Step 4 — Configure Supabase Auth settings
 
-By default Supabase requires email confirmation. Disable this for easier development:
+For local development only, you may disable email confirmation to make test signups faster:
 
 1. In Supabase dashboard → left menu → **Authentication** → **Settings** → **Email**
 2. Turn OFF **"Enable email confirmations"**
 3. Click Save
+
+For production, keep email confirmations ON. The first admin account must be a confirmed Supabase Auth user before you promote it by user ID in Step 9.
 
 ---
 
@@ -68,7 +73,7 @@ The verification documents (screenshots, IDs) are stored here.
 
 1. In Supabase dashboard → left menu → **Storage**
 2. Click **New bucket**
-3. Name it exactly: ``
+3. Name it exactly: `verifications`
 4. Make sure **Public bucket** is turned **OFF** (it should be private)
 5. Click **Create bucket**
 
@@ -78,14 +83,19 @@ The verification documents (screenshots, IDs) are stored here.
 
 1. In the project folder, find the file `.env.local.example`
 2. Make a copy of it and name the copy `.env.local` (no `.example`)
-3. Open `.env.local` and fill in the 3 values you copied in Step 2:
+3. Open `.env.local` and fill in all 7 required values:
    ```
    NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJyour-anon-key-here...
    SUPABASE_SERVICE_ROLE_KEY=eyJyour-service-role-key-here...
+   RESEND_API_KEY=re_your_resend_key_here
+   RESEND_FROM_EMAIL=noreply@yourdomain.com
+   APP_URL=http://localhost:3000
+   CHAR_VERIFY_SECRET=your-long-random-secret
    ```
-4. Save the file
-5. ⚠️ **Never commit `.env.local` to git** — it contains secrets. It is already in `.gitignore`.
+4. For local email testing, Resend can use `onboarding@resend.dev`; production should use a verified sender/domain.
+5. Save the file
+6. ⚠️ **Never commit `.env.local` to git** — it contains secrets. It is already in `.gitignore`.
 
 ---
 
@@ -115,19 +125,29 @@ You should see the Tibia Services website. If you see an error, check that:
 
 ## Step 9 — Create the first admin user
 
-After registering your own account through the website, promote it to admin:
+After registering your own account through the website, promote it to admin by verified Supabase Auth user ID. In production, do not promote by email alone.
 
 1. In Supabase dashboard → **SQL Editor** → New query
-2. Run this (replace `your@email.com` with your actual email):
+2. Find your user ID and confirm the email is verified:
+   ```sql
+   SELECT id, email, email_confirmed_at
+   FROM auth.users
+   WHERE email = 'your@email.com';
+   ```
+3. Copy the `id` UUID from that row, then promote only that verified user:
    ```sql
    UPDATE profiles
    SET role = 'admin'
-   WHERE id = (
-     SELECT id FROM auth.users WHERE email = 'your@email.com'
+   WHERE id = '00000000-0000-0000-0000-000000000000'
+   AND EXISTS (
+     SELECT 1
+     FROM auth.users
+     WHERE auth.users.id = profiles.id
+       AND auth.users.email_confirmed_at IS NOT NULL
    );
    ```
-3. Log out and log back in on the website
-4. You should now be able to access http://localhost:3000/admin
+4. Log out and log back in on the website
+5. You should now be able to access http://localhost:3000/admin
 
 ---
 
@@ -145,10 +165,14 @@ Vercel hosts the website online for free.
    ```
 3. In Vercel dashboard → **Add New Project** → Import your GitHub repo
 4. Vercel will detect it's a Next.js project automatically
-5. Before clicking Deploy, go to **Environment Variables** and add all 3:
+5. Before clicking Deploy, go to **Environment Variables** and add all 7 required values:
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
+   - `RESEND_API_KEY`
+   - `RESEND_FROM_EMAIL`
+   - `APP_URL`
+   - `CHAR_VERIFY_SECRET`
 6. Click **Deploy**
 7. Wait ~2 minutes — Vercel will give you a URL like `https://tibia-services.vercel.app`
 
@@ -164,10 +188,11 @@ Every time you push to GitHub, Vercel automatically redeploys. No manual steps n
 |---------|-----|
 | `npm install` fails | Make sure Node.js v18+ is installed |
 | Page loads but shows database error | Check `.env.local` has correct Supabase URL and keys |
-| Login doesn't work | Make sure email confirmation is disabled in Supabase Auth settings (Step 4) |
+| Login doesn't work locally | Make sure local email confirmation is disabled in Supabase Auth settings (Step 4), or confirm the test email |
+| Production login/admin bootstrap fails | Keep email confirmation enabled and promote only a verified Auth user ID (Step 9) |
 | File uploads fail | Make sure the `verifications` storage bucket exists (Step 5) |
 | Admin page redirects to home | Make sure you ran the SQL in Step 9 to set your role to `admin` |
-| Vercel deployment fails | Check that all 3 environment variables are set in Vercel project settings |
+| Vercel deployment fails | Check that all 7 environment variables are set in Vercel project settings |
 
 ---
 

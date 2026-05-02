@@ -2,6 +2,15 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getServerT } from '@/lib/i18n-server'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Admin | Tibia Services',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient()
@@ -22,9 +31,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-4 mb-8 pb-4 border-b border-border">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8 pb-4 border-b border-border">
         <h1 className="text-xl font-bold text-text-primary">{t('admin_title')}</h1>
-        <nav className="flex gap-4 text-sm">
+        <nav className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
           <Link href="/admin" className="text-text-muted hover:text-gold transition-colors">{t('admin_nav_home')}</Link>
           <Link href="/admin/verifications" className="text-text-muted hover:text-gold transition-colors">{t('admin_nav_verifications')}</Link>
           <Link href="/admin/users" className="text-text-muted hover:text-gold transition-colors">{t('admin_nav_users')}</Link>

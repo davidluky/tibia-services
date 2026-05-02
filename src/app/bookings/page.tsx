@@ -5,6 +5,15 @@ import { Card } from '@/components/ui/Card'
 import { GAMEPLAY_TYPES } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
 import type { Booking } from '@/lib/types'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Minhas Reservas | Tibia Services',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 const STATUS_LABELS: Record<string, string> = {
   pending: 'Pendente',

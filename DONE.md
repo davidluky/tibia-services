@@ -63,16 +63,16 @@ A complete full-stack marketplace website for Tibia game services.
 
 **Reliability & security**
 - Error retry states for failed fetches
-- Rate limiting on bookings (3/min), messages (10/min), service requests (3/min)
-- Security hardening: role protection, self-verification prevention
+- Rate limiting on bookings (3/min), messages (10/min), service requests (3/min), identity uploads (3/hour), and character verification (5/10min)
+- Security hardening: role protection, self-verification prevention, DB-enforced booking/review/featured/dispute contracts
 - Standardized API helpers (auth, errors, rate limiting)
 
 **Testing**
-- 24 unit tests (Jest + React Testing Library)
+- Jest + React Testing Library regression tests for helpers, constants, i18n, sanitization, validation, and migration contracts
 
 **Tech files**
-- `supabase/schema.sql` — complete DB schema, RLS, triggers, indexes
-- `supabase/migrations/` — incremental migration files (001–008)
+- `supabase/schema.sql` — base DB schema, RLS, triggers, indexes
+- `supabase/migrations/` — incremental migration files (001–009); run after `schema.sql`
 - `src/lib/constants.ts` — vocations, gameplay types, weekdays, TC limits
 - `src/lib/types.ts` — all TypeScript types matching DB schema
 - `src/lib/utils.ts` — TC validation, date helpers, string helpers
@@ -97,13 +97,14 @@ These steps cannot be automated — they require your Supabase account and crede
 ### 3. Create `.env.local`
 Copy `.env.local.example` to `.env.local` and fill in your Supabase keys.
 
-### 4. Run the database schema
+### 4. Run the database schema and migrations
 - Supabase dashboard → SQL Editor
 - Paste contents of `supabase/schema.sql` and run it
+- Run every numbered file in `supabase/migrations/` in order
 
 ### 5. Configure Supabase Auth
 - Supabase dashboard → Authentication → Settings → Email
-- Disable "Enable email confirmations" (easier for development)
+- Disable "Enable email confirmations" only for local development; keep it enabled in production
 
 ### 6. Create the Storage bucket
 - Supabase dashboard → Storage → New bucket
@@ -118,14 +119,19 @@ npm run dev
 Open http://localhost:3000
 
 ### 8. Create your admin account
-- Register on the site, then run in Supabase SQL Editor:
+- Register on the site, confirm the email in production, then promote by verified user ID:
 ```sql
 UPDATE profiles SET role = 'admin'
-WHERE id = (SELECT id FROM auth.users WHERE email = 'your@email.com');
+WHERE id = '00000000-0000-0000-0000-000000000000'
+AND EXISTS (
+  SELECT 1 FROM auth.users
+  WHERE auth.users.id = profiles.id
+    AND auth.users.email_confirmed_at IS NOT NULL
+);
 ```
 
 ### 9. Deploy to Vercel
-- Push to GitHub, import in Vercel, add the 3 env vars, deploy
+- Push to GitHub, import in Vercel, add all 7 env vars from `.env.local.example`, deploy
 
 ---
 
@@ -160,7 +166,8 @@ If build succeeds, it's ready for Vercel.
 
 | File | Purpose |
 |------|---------|
-| `supabase/schema.sql` | Run this in Supabase SQL Editor |
+| `supabase/schema.sql` | Run first in Supabase SQL Editor |
+| `supabase/migrations/` | Run every numbered migration after `schema.sql` |
 | `.env.local.example` | Copy to `.env.local`, fill in your keys |
 | `SETUP.md` | Full setup guide from zero |
 | `HOW-TO-CHANGE.md` | How to modify the site |

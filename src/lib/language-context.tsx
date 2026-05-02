@@ -14,8 +14,8 @@ const LanguageContext = createContext<LanguageContextValue>({
   t: (key) => key,
 })
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Locale>('pt')
+export function LanguageProvider({ children, initialLang = 'pt' }: { children: ReactNode; initialLang?: Locale }) {
+  const [lang, setLangState] = useState<Locale>(initialLang)
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -27,12 +27,12 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         try { document.cookie = `tibia_lang=${saved}; path=/; max-age=31536000; SameSite=Lax` } catch { /* ignore */ }
       }
     } catch {
-      // localStorage unavailable (private browsing) — stay on 'pt'
+      // localStorage unavailable; keep the server-provided locale.
     }
     setMounted(true)
   }, [])
 
-  const effectiveLang = mounted ? lang : 'pt'
+  const effectiveLang = mounted ? lang : initialLang
 
   const setLang = (l: Locale) => {
     setLangState(l)

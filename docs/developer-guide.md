@@ -21,7 +21,9 @@ Key pages:
 REST endpoints. All routes use helpers from `api-helpers.ts`:
 - `getAuthUser()` -- get authenticated user + supabase client
 - `requireAdmin()` -- verify admin role, return admin client
-- `checkRateLimit()` -- in-memory per-user rate limiting
+- `parseJsonBody()` -- safe JSON parsing with 400 responses for malformed payloads
+- `checkRateLimit()` -- database-backed per-user rate limiting from domain rows
+- `checkActionRateLimit()` -- database-backed action ledger rate limiting
 - `apiError()`, `unauthorized()`, `forbidden()`, etc. -- standardized error responses
 
 ### Lib (src/lib/)
@@ -79,7 +81,7 @@ While active:
 
 ## Database Overview
 
-10 tables + 1 view. All tables have RLS enabled. See CLAUDE.md for the full schema table.
+11 tables + 1 view. All domain tables have RLS enabled. See CLAUDE.md for the full schema table.
 
 **RLS policies pattern:**
 - Public read for non-sensitive data (profiles, serviceiro_profiles, visible reviews)
@@ -87,7 +89,7 @@ While active:
 - Participant-only access (bookings, messages -- both customer and serviceiro)
 - Admin operations bypass RLS via service_role key
 
-**Trigger:** `on_auth_user_created` -- auto-creates profile row on signup.
+**Triggers/functions:** `on_auth_user_created` auto-creates profile rows on signup. Migrations also add contract triggers/functions for booking transitions, serviceiro verification fields, featured listing confirmation, reviews, and atomic dispute open/resolve flows.
 
 **View:** `serviceiro_completion_counts` -- aggregates completed bookings per serviceiro per gameplay type.
 
@@ -104,10 +106,11 @@ While active:
    if (!user) return unauthorized()
    ```
 4. For admin routes, use `requireAdmin()` instead
-5. Query via `supabase` (respects RLS) or `createAdminClient()` (bypasses RLS)
-6. Add rate limiting on write endpoints:
+5. Parse JSON request bodies with `parseJsonBody()` before reading fields
+6. Query via `supabase` (respects RLS) or `createAdminClient()` (bypasses RLS)
+7. Add rate limiting on write endpoints:
    ```typescript
-   const limited = await checkRateLimit(supabase, 'table_name', 'user_id', user.id, 60000, 3)
+    const limited = await checkRateLimit(supabase, 'table_name', 'user_id', user.id, 60000, 3)
    if (limited) return tooManyRequests()
    ```
 
@@ -117,7 +120,7 @@ While active:
 2. Server Component by default -- fetch data directly
 3. For interactive parts, extract a Client Component with `'use client'`
 4. Use `useLanguage()` for translations in client components
-5. Server components cannot use i18n (no hooks) -- hardcode Portuguese or pass lang as prop
+5. Use `getServerLocale()` / `getServerT()` from `src/lib/i18n-server.ts` for translated server-rendered text
 
 ## i18n System
 
@@ -130,19 +133,23 @@ Translation keys in `src/lib/i18n.ts` (~400 keys per language). Usage:
 const { t } = useLanguage()
 return <h1>{t('nav_browse')}</h1>
 
+// Server component
+const t = await getServerT()
+return <h1>{t('admin_title')}</h1>
+
 // Adding a new key: add to ALL 3 language blocks in i18n.ts
 ```
 
-Language is stored in React context (`language-context.tsx`) and persisted in `localStorage`. The `LanguageSwitcher` component toggles between languages.
+Language is stored in React context (`language-context.tsx`), persisted in `localStorage`, and mirrored to the `tibia_lang` cookie so server components and `<html lang>` render the same locale before hydration. The `LanguageSwitcher` component toggles between languages.
 
-Admin panel is Portuguese-only (server components).
+Admin panel uses server-side translations via `getServerT()` and the `tibia_lang` cookie.
 
 ## Common Pitfalls
 
 - **RLS policies block your query?** Check that the authenticated user matches the policy conditions. Use the admin client only for admin operations.
 - **Admin client in client component?** Never. The service_role key must never reach the browser. Only use `createAdminClient()` in API routes.
-- **Rate limiting false positives?** `checkRateLimit()` queries the table for recent rows. If the table has no `created_at` column, it won't work.
+- **Rate limiting false positives?** `checkRateLimit()` queries the table for recent rows. If the table has no timestamp column, use `checkActionRateLimit()` and the `api_rate_limits` ledger instead.
 - **TC validation errors?** TC amounts must be multiples of 25, min 25, max 100,000. Use `isValidTC()` before storing.
 - **Missing i18n key?** Add the key to all 3 language blocks in `i18n.ts`. The `t()` function returns the key itself if not found.
-- **Booking status not changing?** Dual confirmation is required for price, payment, and completion. Both parties must confirm.
+- **Booking status not changing?** Dual confirmation is required for price, payment, and completion. Both parties must confirm, and migration 009 enforces allowed status transitions at the DB layer.
 - **Contact info not showing?** `/api/contact/[id]` only returns data if the requester has an active booking with that serviceiro.

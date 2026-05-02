@@ -14,6 +14,7 @@ async function getFeaturedServiceiros(): Promise<ServiceiroWithProfile[]> {
     `)
     .eq('is_registered', true)
     .eq('profiles.is_banned', false)
+    .eq('profiles.role', 'serviceiro')
     .limit(6)
 
   if (error || !data || data.length === 0) return []
