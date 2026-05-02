@@ -13,6 +13,7 @@ import {
   forbidden,
   badRequest,
   serverError,
+  parseJsonBody,
 } from '@/lib/api-helpers'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -64,8 +65,13 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
 
   if (!isCustomer && !isServiceiro) return forbidden('Acesso negado.')
 
-  const body = await request.json()
-  const { action, price_tc } = body
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const { action, price_tc } = parsed.data
+
+  if (typeof action !== 'string') {
+    return badRequest('Ação inválida.')
+  }
 
   // Fetch display names for both participants (profiles are publicly readable)
   const { data: participantProfiles } = await supabase
@@ -111,7 +117,7 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
     }
 
     case 'set_price':
-      if (!price_tc || !isValidTC(price_tc)) {
+      if (typeof price_tc !== 'number' || !isValidTC(price_tc)) {
         return badRequest('Preço inválido. Deve ser múltiplo de 25 TC.')
       }
       if (booking.status !== 'active') return badRequest('Reserva não está ativa.')

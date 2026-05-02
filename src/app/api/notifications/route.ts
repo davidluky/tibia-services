@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthUser, unauthorized, badRequest } from '@/lib/api-helpers'
+import { getAuthUser, unauthorized, badRequest, parseJsonBody } from '@/lib/api-helpers'
 
 export async function GET() {
   const { user, supabase } = await getAuthUser()
@@ -19,8 +19,9 @@ export async function PATCH(request: NextRequest) {
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
-  const body = await request.json()
-  const { ids } = body
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const { ids } = parsed.data
 
   if (!Array.isArray(ids) || ids.length === 0) return badRequest('Missing notification ids')
   if (ids.length > 50) return badRequest('Too many ids')

@@ -13,7 +13,22 @@ jest.mock('next/server', () => ({
 jest.mock('@/lib/supabase/server', () => ({ createClient: jest.fn() }))
 jest.mock('@/lib/supabase/admin', () => ({ createAdminClient: jest.fn() }))
 
-import { apiError, unauthorized, forbidden, notFound, badRequest, serverError, tooManyRequests } from '@/lib/api-helpers'
+import { createAdminClient } from '@/lib/supabase/admin'
+import {
+  apiError,
+  unauthorized,
+  forbidden,
+  notFound,
+  badRequest,
+  serverError,
+  tooManyRequests,
+  rejectOversizedRequest,
+  checkActionRateLimit,
+} from '@/lib/api-helpers'
+
+afterEach(() => {
+  jest.clearAllMocks()
+})
 
 describe('API error helpers', () => {
   it('apiError returns correct status and body', async () => {
@@ -45,5 +60,34 @@ describe('API error helpers', () => {
 
   it('tooManyRequests returns 429', () => {
     expect(tooManyRequests().status).toBe(429)
+  })
+
+  it('can require content-length before parsing large uploads', () => {
+    const request = { headers: { get: jest.fn(() => null) } } as unknown as Request
+    expect(rejectOversizedRequest(request, 100, { requireContentLength: true })?.status).toBe(400)
+  })
+
+  it('rejects content-length above the configured limit', () => {
+    const request = { headers: { get: jest.fn(() => '101') } } as unknown as Request
+    expect(rejectOversizedRequest(request, 100)?.status).toBe(413)
+  })
+
+  it('fails closed when action rate-limit recording errors', async () => {
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    ;(createAdminClient as jest.Mock).mockReturnValue({
+      rpc: jest.fn().mockResolvedValue({ data: null, error: { message: 'boom' } }),
+    })
+
+    await expect(checkActionRateLimit('user-id', 'action', 1000, 1)).resolves.toBe(true)
+    expect(errorSpy).toHaveBeenCalled()
+    errorSpy.mockRestore()
+  })
+
+  it('uses the atomic action rate-limit function result', async () => {
+    ;(createAdminClient as jest.Mock).mockReturnValue({
+      rpc: jest.fn().mockResolvedValue({ data: false, error: null }),
+    })
+
+    await expect(checkActionRateLimit('user-id', 'action', 1000, 1)).resolves.toBe(false)
   })
 })

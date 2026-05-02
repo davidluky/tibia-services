@@ -4,17 +4,37 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { Providers } from '@/components/providers/Providers'
 import { Toaster } from 'react-hot-toast'
+import { getServerLocale } from '@/lib/i18n-server'
+
+const HTML_LANG_BY_LOCALE = {
+  pt: 'pt-BR',
+  en: 'en',
+  es: 'es',
+} as const
 
 export const metadata: Metadata = {
+  metadataBase: new URL((process.env.APP_URL ?? 'https://tibia.davidluky.com').replace(/\/$/, '')),
   title: 'Tibia Services — Encontre seu Serviceiro',
   description: 'Marketplace de serviceiros para Tibia. Encontre players confiáveis para hunts, quests, e mais.',
+  openGraph: {
+    title: 'Tibia Services — Encontre seu Serviceiro',
+    description: 'Marketplace de serviceiros para Tibia. Encontre players confiáveis para hunts, quests, e mais.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Tibia Services — Encontre seu Serviceiro',
+    description: 'Marketplace de serviceiros para Tibia. Encontre players confiáveis para hunts, quests, e mais.',
+  },
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getServerLocale()
+
   return (
-    <html lang="pt-BR">
+    <html lang={HTML_LANG_BY_LOCALE[locale]}>
       <body className="min-h-screen flex flex-col">
-        <Providers>
+        <Providers initialLang={locale}>
           <Toaster
             position="bottom-right"
             toastOptions={{

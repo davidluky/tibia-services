@@ -1,13 +1,15 @@
 // Server-side Supabase client (used in Server Components and API routes)
 // Still uses the anon key but runs server-side — respects RLS policies.
+import 'server-only'
 import { createServerClient } from '@supabase/ssr'
 import { cookies, type UnsafeUnwrappedCookies } from 'next/headers';
+import { requireServerEnv } from '@/lib/env'
 
 export function createClient() {
   const cookieStore = (cookies() as unknown as UnsafeUnwrappedCookies)
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    requireServerEnv('NEXT_PUBLIC_SUPABASE_URL'),
+    requireServerEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
     {
       cookies: {
         get(name: string) {

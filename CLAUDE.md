@@ -48,10 +48,10 @@ src/
       client.ts                  Browser-side client (anon key, safe for client components)
       server.ts                  Server-side client (anon key + cookies, respects RLS)
       admin.ts                   Admin client (service_role key, bypasses RLS — server only)
-  __tests__/                     7 test files (Jest + React Testing Library)
+  __tests__/                     Jest + React Testing Library regression tests
 supabase/
-  schema.sql                     Full database schema (tables, RLS, triggers, indexes, views)
-  migrations/                    Incremental migrations (001-008)
+  schema.sql                     Base database schema (canonical state also requires migrations)
+  migrations/                    Incremental migrations (001-009)
   seed_mock*.sql                 Mock data for development
 ```
 
@@ -76,11 +76,17 @@ External:
 |---------|-------------|
 | `npm run dev` | Start dev server (localhost:3000) |
 | `npm run build` | Production build |
-| `npm run lint` | ESLint |
+| `npm run package` | Build and adapt for Cloudflare Workers |
+| `npm run lint` | ESLint CLI with zero-warning gate |
+| `npm run typecheck` | TypeScript check without emit |
+| `npm run audit` | npm dependency audit (moderate+) |
+| `npm run quality` | Lint, typecheck, tests, build, and audit |
 | `npm test` | Run Jest tests |
 | `npm run test:watch` | Jest in watch mode |
 
 ## Database Schema
+
+Canonical database state is `supabase/schema.sql` followed by every numbered file in `supabase/migrations/`, run in filename order. `schema.sql` alone is not complete for production because migrations carry post-schema features and hardening. Migration `009-contract-hardening.sql` adds database-level enforcement for booking `status` and `completed_at` transitions, serviceiro/review/featured policy hardening, verification-field protections, and the atomic `api_rate_limits` ledger/RPC.
 
 | Table | Purpose | Key Fields |
 |-------|---------|------------|
@@ -177,14 +183,15 @@ CHAR_VERIFY_SECRET=               # HMAC secret for character verification codes
 ## Critical Implementation Details
 
 - **RLS everywhere.** Every table has Row-Level Security enabled. The browser and server clients respect RLS. Only the admin client (service_role key) bypasses it.
-- **Rate limiting.** `api-helpers.ts` provides `checkRateLimit()` — queries the target table for recent rows by user within a time window. Bookings: 3/min, messages: 10/min, service requests: 3/min.
+- **Rate limiting.** `api-helpers.ts` provides `checkRateLimit()` for domain-row-backed throttles and `checkActionRateLimit()` for the migration 009 `api_rate_limits` ledger. Bookings: 3/min, messages: 10/min, service requests: 3/min, identity uploads: 3/hour, character verification: 5/10min.
 - **Character verification.** Uses TibiaData API v4. Server generates HMAC-based code (`TIBS-XXXXXXXX`), user places it in their Tibia.com character comment, server verifies via API.
 - **Admin client bypasses RLS.** `createAdminClient()` uses the service_role key. Never import in client components.
 - **TC validation.** Amounts must be multiples of 25 (game denomination), min 25, max 100,000. Use `isValidTC()` from `utils.ts`.
 - **Contact info gated.** WhatsApp/Discord only returned by `/api/contact/[id]` after verifying the requester has an active booking with that serviceiro.
 - **Dual confirmation pattern.** Price, payment, and completion all require both parties to confirm before the action takes effect.
 - **Input sanitization.** `sanitizeText()` strips HTML tags and `javascript:` protocols before database storage.
-- **File uploads.** Verification screenshots/IDs go to Supabase Storage `verifications` bucket. MIME validation + 5MB limit enforced.
+- **File uploads.** Verification screenshots/IDs are submitted to `/api/verification`, then uploaded server-side with the admin Supabase client to the private `verifications` bucket. MIME validation + 5MB limit enforced. Admin review pages generate signed URLs for private file previews.
+- **Production admin bootstrap.** Keep email confirmations enabled in production. Promote the first admin by verified `auth.users.id`, not by email-only SQL.
 - **Ban system.** Banned users' profiles are hidden by RLS (`NOT is_banned` on SELECT policy).
 
 ## i18n

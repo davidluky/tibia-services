@@ -10,22 +10,23 @@ import {
   tooManyRequests,
   serverError,
   checkRateLimit,
+  parseJsonBody,
 } from '@/lib/api-helpers'
 
 export async function POST(request: NextRequest) {
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
-  const body = await request.json()
-  const { serviceiro_id, service_type } = body
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const { serviceiro_id, service_type } = parsed.data
 
-  if (!serviceiro_id || !service_type) {
+  if (typeof serviceiro_id !== 'string' || typeof service_type !== 'string') {
     return badRequest('Dados inválidos.')
   }
 
   // Validate service_type is a known gameplay type
-  const validTypes = GAMEPLAY_TYPES.map(g => g.key)
-  if (!validTypes.includes(service_type)) {
+  if (!GAMEPLAY_TYPES.some(g => g.key === service_type)) {
     return badRequest('Tipo de serviço inválido.')
   }
 

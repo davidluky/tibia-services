@@ -6,15 +6,18 @@ import {
   notFound,
   apiError,
   serverError,
+  parseJsonBody,
 } from '@/lib/api-helpers'
+import { sanitizeText } from '@/lib/utils'
 
 export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const auth = await requireAdmin()
   if (!auth.authorized) return unauthorized()
 
-  const body = await request.json()
-  const { resolution } = body
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const { resolution } = parsed.data
 
   if (typeof resolution !== 'string' || resolution.length < 10 || resolution.length > 500) {
     return badRequest('A resolução deve ter entre 10 e 500 caracteres.')
@@ -32,25 +35,15 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
     return apiError('Disputa já foi resolvida.', 409)
   }
 
-  const { error: disputeUpdateError } = await auth.adminClient.from('disputes').update({
-    status: 'resolved',
-    resolution,
-    resolved_by: auth.user.id,
-    resolved_at: new Date().toISOString(),
-  }).eq('id', params.id)
+  const { error: resolveError } = await auth.adminClient.rpc('resolve_booking_dispute', {
+    p_dispute_id: params.id,
+    p_resolved_by: auth.user.id,
+    p_resolution: sanitizeText(resolution),
+  })
 
-  if (disputeUpdateError) {
-    console.error('[disputes] Failed to resolve dispute:', disputeUpdateError)
+  if (resolveError) {
+    console.error('[disputes] Failed to resolve dispute:', resolveError)
     return serverError('Erro ao resolver disputa.')
-  }
-
-  const { error: bookingError } = await auth.adminClient
-    .from('bookings')
-    .update({ status: 'resolved' })
-    .eq('id', dispute.booking_id)
-
-  if (bookingError) {
-    console.error('[disputes] Failed to update booking status to resolved:', bookingError)
   }
 
   return NextResponse.json({ success: true })

@@ -1,6 +1,15 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardClient } from './DashboardClient'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Dashboard | Tibia Services',
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function DashboardPage() {
   const supabase = createClient()
@@ -19,7 +28,7 @@ export default async function DashboardPage() {
   }
 
   // Contact fields are column-locked via migration 007. Read through the
-  // SECURITY DEFINER helper — it returns only the caller's own row.
+  // SECURITY DEFINER helper: it returns only the caller's own row.
   const { data: contact } = await supabase.rpc('my_contact_info').single<{
     whatsapp: string | null
     discord: string | null

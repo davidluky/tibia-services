@@ -1,4 +1,4 @@
-# Design Decisions — Tibia Services Marketplace
+# Design Decisions - Tibia Services Marketplace
 
 ## Architecture
 
@@ -7,7 +7,7 @@ App Router supports React Server Components, which lets us fetch data on the ser
 
 ### Supabase over Firebase
 - PostgreSQL gives us proper relational data and JOIN queries
-- Row Level Security (RLS) enforces access control at the database level — no need for custom middleware on every endpoint
+- Row Level Security (RLS) enforces access control at the database level; API routes still validate business logic before writes
 - Supabase Auth is built-in, no need for a separate auth service
 - Generous free tier (500MB storage, 500MB database)
 - SQL is more familiar to most developers than Firestore's document model
@@ -16,7 +16,7 @@ App Router supports React Server Components, which lets us fetch data on the ser
 Prevents type mismatches between database types and UI components, especially for the `VocationKey`, `GameplayTypeKey`, and `WeekdayKey` union types.
 
 ### Tailwind CSS for styling
-Utility-first CSS avoids naming collisions and keeps styles co-located with components. The custom `bg-bg-primary`, `text-gold`, etc. tokens are defined in `tailwind.config.ts` and reused throughout — changing the theme requires editing one file.
+Utility-first CSS avoids naming collisions and keeps styles co-located with components. The custom `bg-bg-primary`, `text-gold`, etc. tokens are defined in `tailwind.config.ts` and reused throughout; changing the theme requires editing one file.
 
 ---
 
@@ -39,6 +39,9 @@ The smallest denomination in Tibia is 25 TC. Enforced by `isValidTC()` in `utils
 
 ### Contact info gated behind active/completed booking
 WhatsApp and Discord are sensitive. Exposing them only after a booking is accepted prevents scraping and spam. The check is server-side (`/api/contact/[id]`) so it cannot be bypassed by the client.
+
+### Database-enforced marketplace contracts
+User-facing API routes still perform validation for clear errors, but the database owns the high-value invariants: safe booking initial state, booking status transitions, final-state immutability, monotonic participant confirmations, review-to-booking integrity, featured-listing activation, serviceiro verification fields, atomic action rate limits, and atomic dispute transitions. This prevents authenticated users from bypassing business rules through the public Supabase client.
 
 ---
 
@@ -76,10 +79,10 @@ Navbar collapses to hamburger on mobile. Browse page hides filter sidebar on mob
 
 ## Completed Improvements
 
-- ~~Real-time messaging via Supabase Realtime~~ — DONE (postgres_changes subscriptions)
-- ~~Email notifications on booking status changes~~ — DONE (`src/lib/email.ts`, Resend)
-- ~~Dispute resolution flow~~ — DONE (disputes route + admin resolution)
-- ~~Tibia character verification via TibiaData API~~ — DONE (verify-character route, API v4)
+- ~~Real-time messaging via Supabase Realtime~~ - DONE (postgres_changes subscriptions)
+- ~~Email notifications on booking status changes~~ - DONE (`src/lib/email.ts`, Resend)
+- ~~Dispute resolution flow~~ - DONE (disputes route + admin resolution)
+- ~~Tibia character verification via TibiaData API~~ - DONE (verify-character route, API v4)
 
 ## Future Improvements (not built)
 

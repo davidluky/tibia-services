@@ -1,5 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { ServiceRequestsClient } from './ServiceRequestsClient'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Pedidos de Serviço | Tibia Services',
+  description: 'Veja pedidos abertos de clientes e encontre oportunidades de serviço no Tibia.',
+}
 
 export default async function ServiceRequestsPage() {
   const supabase = createClient()

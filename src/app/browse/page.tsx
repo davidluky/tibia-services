@@ -3,6 +3,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { BrowseClient } from './BrowseClient'
 import type { ServiceiroWithProfile } from '@/lib/types'
 import type { GameplayTypeKey } from '@/lib/constants'
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Buscar Serviceiros | Tibia Services',
+  description: 'Compare serviceiros de Tibia por vocação, tipo de serviço, disponibilidade, avaliações e verificação.',
+}
 
 async function getAllServiceiros(): Promise<ServiceiroWithProfile[]> {
   const supabase = createClient()
@@ -14,6 +20,7 @@ async function getAllServiceiros(): Promise<ServiceiroWithProfile[]> {
       profile:profiles!inner(id, role, display_name, bio, is_banned, created_at)
     `)
     .eq('profiles.is_banned', false)
+    .eq('profiles.role', 'serviceiro')
 
   if (error || !data || data.length === 0) return []
 

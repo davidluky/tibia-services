@@ -9,4 +9,4 @@ Disallow: /admin
 Disallow: /bookings
 Disallow: /auth
 
-Sitemap: https://tibiaservices.com.br/sitemap.xml
+Sitemap: https://tibia.davidluky.com/sitemap.xml

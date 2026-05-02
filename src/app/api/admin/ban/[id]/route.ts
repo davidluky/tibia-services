@@ -5,6 +5,7 @@ import {
   forbidden,
   badRequest,
   serverError,
+  parseJsonBody,
 } from '@/lib/api-helpers'
 
 export async function PATCH(request: NextRequest, props: { params: Promise<{ id: string }> }) {
@@ -12,7 +13,9 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
   const auth = await requireAdmin()
   if (!auth.authorized) return unauthorized()
 
-  const body = await request.json()
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const body = parsed.data
   if (typeof body.ban !== 'boolean') {
     return badRequest('Valor inválido.')
   }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireServerEnv } from '@/lib/env'
 import {
   getAuthUser,
   unauthorized,
@@ -9,20 +10,17 @@ import {
   notFound,
   apiError,
   serverError,
+  parseJsonBody,
+  checkActionRateLimit,
 } from '@/lib/api-helpers'
 
 function generateVerificationCode(userId: string): string {
-  const secret = process.env.CHAR_VERIFY_SECRET
-  if (!secret) throw new Error('CHAR_VERIFY_SECRET is not configured')
+  const secret = requireServerEnv('CHAR_VERIFY_SECRET')
   const hmac = createHmac('sha256', secret).update(userId).digest('hex')
   return `TIBS-${hmac.slice(0, 8).toUpperCase()}`
 }
 
-// Guard: fail early if secret is missing
-const VERIFY_SECRET_AVAILABLE = !!process.env.CHAR_VERIFY_SECRET
-
 export async function GET() {
-  if (!VERIFY_SECRET_AVAILABLE) return serverError('Server misconfiguration')
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
@@ -53,7 +51,6 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!VERIFY_SECRET_AVAILABLE) return serverError('Server misconfiguration')
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
@@ -68,8 +65,9 @@ export async function POST(request: Request) {
     return forbidden('Acesso negado.')
   }
 
-  const body = await request.json()
-  const { character_name } = body
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const { character_name } = parsed.data
 
   // Validate character name: non-empty, max 30 chars, letters and spaces only
   if (!character_name || typeof character_name !== 'string') {
@@ -81,13 +79,17 @@ export async function POST(request: Request) {
   }
 
   const verificationCode = generateVerificationCode(user.id)
+  const rateLimited = await checkActionRateLimit(user.id, 'verify_character', 10 * 60_000, 5)
+  if (rateLimited) {
+    return apiError('Muitas tentativas. Aguarde antes de tentar novamente.', 429)
+  }
 
   // Fetch character from TibiaData API v4
   let characterData: { name: string; comment: string | null } | null = null
   try {
     const res = await fetch(
       `https://api.tibiadata.com/v4/character/${encodeURIComponent(trimmed)}`,
-      { next: { revalidate: 0 } } // no caching
+      { next: { revalidate: 0 }, signal: AbortSignal.timeout(8000) } // no caching
     )
     if (!res.ok) {
       return apiError('Não foi possível verificar o personagem. Tente novamente.', 502)

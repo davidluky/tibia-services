@@ -1,7 +1,7 @@
 # Pending Database Migrations
 
-Run these SQL files in your Supabase Dashboard -> SQL Editor, in order.
-All migrations are in the `supabase/migrations/` directory.
+Run `supabase/schema.sql` first, then run these SQL files in your Supabase Dashboard -> SQL Editor, in order.
+The canonical database state is the base schema plus every numbered migration in `supabase/migrations/`; do not treat `schema.sql` alone as complete.
 
 ## Required Migrations (run in order after schema.sql)
 
@@ -43,6 +43,15 @@ All migrations are in the `supabase/migrations/` directory.
 - Each confirmation boolean can only be toggled by its owning party (customer flags by customer, serviceiro flags by serviceiro)
 - Price changes automatically reset both `price_confirmed_by_*` flags to force renegotiation
 - `service_role` (admin client) bypasses all checks
-- Note: `status` and `completed_at` transitions are still API-enforced only (tracked as future hardening)
+- Note: migration 009 supersedes this file's API-only gap for `status` and `completed_at` transitions
 
-**Status:** PENDING — run all 8 migrations in order before deploying
+### 009-contract-hardening.sql (2026-04-30)
+- Tightens serviceiro profile read/update policies to require a serviceiro role and non-banned profile
+- Protects registration and character verification fields from self-modification
+- Extends booking database guards to INSERT plus UPDATE, including self-booking prevention, initial-state checks, service type validation, TC bounds, participant/service-type immutability, owned monotonic confirmation flags, price confirmation resets, final-state immutability, and status/`completed_at` transition enforcement
+- Ensures review inserts match the completed booking being reviewed
+- Prevents public clients from self-activating featured listings
+- Creates `api_rate_limits` ledger table plus the atomic `check_api_action_rate_limit()` function for route-level rate limiting that does not naturally create a domain row
+- Disables public dispute inserts; customer dispute creation goes through atomic open/resolve dispute functions
+
+**Status:** PENDING -- run all 9 current migrations in order before deploying.

@@ -9,7 +9,10 @@ const config: Config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testMatch: ['<rootDir>/src/__tests__/**/*.test.ts'],
+  testMatch: ['<rootDir>/src/__tests__/**/*.test.ts?(x)'],
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/.open-next/', '<rootDir>/node_modules/'],
+  modulePathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/.open-next/', '<rootDir>/node_modules/'],
+  watchPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/.open-next/'],
 }
 
 export default createJestConfig(config)

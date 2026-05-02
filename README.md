@@ -41,6 +41,7 @@ See [SETUP.md](SETUP.md) for the full 10-step beginner guide.
 | [DONE.md](DONE.md) | Feature list and next steps |
 | [CLAUDE.md](CLAUDE.md) | Technical reference for AI coding sessions |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Contributing guide |
+| [docs/build-commands.md](docs/build-commands.md) | Build, test, audit, and quality gates |
 | [docs/design-decisions.md](docs/design-decisions.md) | Architecture and data model decisions |
 | [docs/developer-guide.md](docs/developer-guide.md) | Developer guide (auth, bookings, i18n, adding features) |
 | [docs/tech-notes.md](docs/tech-notes.md) | Implementation details (rate limiting, verification, state machine) |

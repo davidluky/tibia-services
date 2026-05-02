@@ -9,6 +9,7 @@ import {
   serverError,
   checkRateLimit,
   tooManyRequests,
+  parseJsonBody,
 } from '@/lib/api-helpers'
 
 export async function POST(request: Request) {
@@ -25,12 +26,9 @@ export async function POST(request: Request) {
   const rateLimited = await checkRateLimit(supabase, 'service_requests', 'customer_id', user.id, 60_000, 3)
   if (rateLimited) return tooManyRequests()
 
-  let body: Record<string, unknown>
-  try {
-    body = await request.json()
-  } catch {
-    return badRequest('invalid_json')
-  }
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const body = parsed.data
 
   const {
     service_type,

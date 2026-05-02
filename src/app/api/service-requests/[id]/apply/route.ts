@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GAMEPLAY_TYPES } from '@/lib/constants'
+import { createAdminClient } from '@/lib/supabase/admin'
 import {
   getAuthUser,
   unauthorized,
@@ -14,6 +15,7 @@ export async function POST(_req: NextRequest, props: { params: Promise<{ id: str
   const params = await props.params;
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
+  const admin = createAdminClient()
 
   // Must be a serviceiro
   const { data: profile } = await supabase
@@ -44,6 +46,16 @@ export async function POST(_req: NextRequest, props: { params: Promise<{ id: str
     return badRequest('Você não pode oferecer serviço ao seu próprio pedido.')
   }
 
+  const { data: customerProfile } = await admin
+    .from('profiles')
+    .select('role, is_banned')
+    .eq('id', request.customer_id)
+    .single()
+
+  if (!customerProfile || customerProfile.role !== 'customer' || customerProfile.is_banned) {
+    return apiError('Este pedido não está mais disponível.', 409)
+  }
+
   // Validate service_type
   const validTypes = GAMEPLAY_TYPES.map(g => g.key)
   if (!validTypes.includes(request.service_type)) {
@@ -51,7 +63,7 @@ export async function POST(_req: NextRequest, props: { params: Promise<{ id: str
   }
 
   // Create booking: serviceiro offers → customer is the requester
-  const { data: booking, error } = await supabase
+  const { data: booking, error } = await admin
     .from('bookings')
     .insert({
       customer_id:   request.customer_id,

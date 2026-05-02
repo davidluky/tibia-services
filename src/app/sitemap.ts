@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://tibiaservices.com.br'
+  const baseUrl = (process.env.APP_URL ?? 'https://tibia.davidluky.com').replace(/\/$/, '')
 
   const admin = createAdminClient()
   const { data: serviceiros } = await admin

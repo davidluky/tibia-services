@@ -46,6 +46,8 @@ export const BOOKING_STATUSES = {
   COMPLETED: 'completed',  // both parties marked complete
   DECLINED:  'declined',   // serviceiro declined
   CANCELLED: 'cancelled',  // either party cancelled while active
+  DISPUTED:  'disputed',   // participant opened a dispute
+  RESOLVED:  'resolved',   // admin resolved a dispute
 } as const
 
 // ─── Tibia Coins ─────────────────────────────────────────────────────────────

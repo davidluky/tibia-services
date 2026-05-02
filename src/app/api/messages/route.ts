@@ -8,6 +8,7 @@ import {
   serverError,
   checkRateLimit,
   tooManyRequests,
+  parseJsonBody,
 } from '@/lib/api-helpers'
 import { sanitizeText } from '@/lib/utils'
 
@@ -48,10 +49,13 @@ export async function POST(request: NextRequest) {
   const rateLimited = await checkRateLimit(supabase, 'messages', 'sender_id', user.id, 60_000, 10)
   if (rateLimited) return tooManyRequests()
 
-  const body = await request.json()
-  const { booking_id, content } = body
+  const parsed = await parseJsonBody(request)
+  if (!parsed.ok) return parsed.response
+  const { booking_id, content } = parsed.data
 
-  if (!booking_id || !content?.trim()) return badRequest('Dados inválidos.')
+  if (typeof booking_id !== 'string' || typeof content !== 'string' || !content.trim()) {
+    return badRequest('Dados inválidos.')
+  }
 
   if (content.length > 1000) return badRequest('Mensagem muito longa.')
 
