@@ -23,7 +23,7 @@
   - `docs/FLIGHT-RECORDER.md`, `docs/RETRO.md`, `docs/MIGRATION-STEPS.md`, `docs/tech-notes.md`, `docs/design-decisions.md`, `docs/developer-guide.md`, `docs/version-history.md`, `docs/build-commands.md`, `docs/DEPLOY-CHECKLIST.md`, `CONTRIBUTING.md`, `CLAUDE.md`, and `NEXT-STEPS.md`.
 
 Main commit: `f51cfec` (`feat(security): harden marketplace contracts`).
-CI fix commit: pending.
+CI fix commit: `0846c22` (`fix(ci): remove implicit Jest ts-node dependency`).
 
 ## What's in progress
 
