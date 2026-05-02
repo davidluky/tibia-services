@@ -73,3 +73,11 @@ This file captures root-cause bug classes, the guard installed, and what should 
 - **Root cause:** Rate limiting was not one transactional database operation and did not fail closed at the API boundary.
 - **Guard installed:** Migration `009-contract-hardening.sql` adds `check_api_action_rate_limit()` with a transaction advisory lock; `checkActionRateLimit()` now calls that RPC and treats any error as limited.
 - **Regression prevention:** Abuse controls must be atomic at the persistence boundary and fail closed unless the route is explicitly non-security-sensitive.
+
+## 2026-05-02 - CI-Only Jest Config Loader Failure
+
+- **Class:** CI depended on a TypeScript Jest config loader that was available locally but not installed after a clean `npm ci`.
+- **Impact:** GitHub Actions failed at `npm test -- --runInBand` before running tests.
+- **Root cause:** `jest.config.ts` requires `ts-node` for Jest config parsing, but `ts-node` was not a project dependency and should not be required just to read test config.
+- **Guard installed:** Replaced `jest.config.ts` with `jest.config.js`, added that JS config to the lint target, and moved the workflow to Node 24-compatible `actions/checkout@v6` / `actions/setup-node@v6`.
+- **Regression prevention:** Keep tool configs that run before TypeScript compilation in JavaScript unless the required config loader is an explicit dependency and CI validates a clean install.

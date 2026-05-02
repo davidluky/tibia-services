@@ -7,7 +7,7 @@
     "build": "next build",
     "package": "opennextjs-cloudflare build",
     "start": "next start",
-    "lint": "eslint src next.config.js tailwind.config.ts --ext .ts,.tsx,.js --max-warnings=0",
+    "lint": "eslint src next.config.js jest.config.js tailwind.config.ts --ext .ts,.tsx,.js --max-warnings=0",
     "typecheck": "tsc --noEmit --pretty false",
     "audit": "npm audit --audit-level=moderate",
     "quality": "npm run lint && npm run typecheck && npm test -- --runInBand && npm run build && npm run audit",
