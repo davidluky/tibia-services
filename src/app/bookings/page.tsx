@@ -36,7 +36,7 @@ const STATUS_COLORS: Record<string, string> = {
 }
 
 export default async function BookingsPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')

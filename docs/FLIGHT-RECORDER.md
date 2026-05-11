@@ -81,3 +81,19 @@ This file captures root-cause bug classes, the guard installed, and what should 
 - **Root cause:** `jest.config.ts` requires `ts-node` for Jest config parsing, but `ts-node` was not a project dependency and should not be required just to read test config.
 - **Guard installed:** Replaced `jest.config.ts` with `jest.config.js`, added that JS config to the lint target, and moved the workflow to Node 24-compatible `actions/checkout@v6` / `actions/setup-node@v6`.
 - **Regression prevention:** Keep tool configs that run before TypeScript compilation in JavaScript unless the required config loader is an explicit dependency and CI validates a clean install.
+
+## 2026-05-11 - Next Server Cookie API Drift
+
+- **Class:** Server Components used a synchronous Supabase SSR cookie adapter after the Next.js server cookie API became async.
+- **Impact:** Server-rendered authenticated pages could fail typecheck/build or read sessions through an outdated adapter shape.
+- **Root cause:** `src/lib/supabase/server.ts` still treated `cookies()` as synchronous and exposed `createClient()` as a synchronous helper.
+- **Guard installed:** `createClient()` now awaits `cookies()` and uses the `getAll`/`setAll` adapter form; all server callers await it. `getAuthUser()` and rate-limit helper types were updated to the async return type.
+- **Regression prevention:** When upgrading Next.js or `@supabase/ssr`, run `npm run typecheck` and keep the server Supabase adapter aligned with the current SSR cookie contract.
+
+## 2026-05-11 - Dependency Audit Lock Drift
+
+- **Class:** Locked dependency versions carried moderate-or-higher audit findings.
+- **Impact:** `npm run quality` could fail at the audit step even when source tests passed.
+- **Root cause:** The lockfile pinned `next@15.5.15` and `fast-xml-builder@1.1.5`.
+- **Guard installed:** A non-force `npm audit fix` moved the lockfile to `next@15.5.18` and `fast-xml-builder@1.2.0`, adding the required `xml-naming` dependency.
+- **Regression prevention:** Keep `npm run audit` in the quality gate and prefer non-force lockfile repairs for transitive advisories.

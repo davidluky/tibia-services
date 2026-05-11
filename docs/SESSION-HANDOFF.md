@@ -1,3 +1,44 @@
+# Session Handoff - 2026-05-11
+
+## What was done
+
+- Reconciled the GitHub canonical source with the promoted snapshot for a conservative maintenance pass.
+- Updated the server Supabase SSR client for the current async Next.js cookie API:
+  - `src/lib/supabase/server.ts` now awaits `cookies()` and uses `getAll`/`setAll`.
+  - Server Components and helpers that use the server client now await `createClient()`.
+  - `getAuthUser()` and rate-limit helper types match the async server client.
+- Kept the promoted snapshot's email helper refactor that centralizes Resend send result handling, without adding any new email-send script or running Resend.
+- Ran a non-force `npm audit fix`; the lockfile now resolves Next.js to `15.5.18` within the existing `^15.5.15` range and resolves `fast-xml-builder` to `1.2.0`.
+- Updated `docs/FLIGHT-RECORDER.md` and `docs/RETRO.md` with this maintenance pass.
+
+## Verification
+
+- `npm ci`: PASS.
+- `npm run quality`: PASS with dummy non-secret env values:
+  - `npm run lint`: PASS.
+  - `npm run typecheck`: PASS.
+  - `npm test -- --runInBand`: PASS, 8 test suites and 63 tests.
+  - `npm run build`: PASS on Next.js `15.5.18`.
+  - `npm run audit -- --audit-level=moderate`: PASS, 0 vulnerabilities.
+- `git diff --check`: PASS; Git emitted LF-to-CRLF normalization warnings only.
+
+## Boundaries
+
+- No production deployment.
+- No Supabase SQL, seed, RLS change, service-role probe, or live data mutation.
+- No Resend send.
+- No external API scan.
+- Build verification used dummy non-secret environment values only.
+- Generated artifacts (`node_modules`, `.next`, `.swc`, `next-env.d.ts`, `tsconfig.tsbuildinfo`) were removed after verification.
+
+## What is next
+
+1. Apply and verify the canonical database state manually before any production deployment: `supabase/schema.sql`, then migrations `001` through `009` in order.
+2. Run owner-approved hosted smoke checks only after deployment and with explicit live-service boundaries.
+3. Run any Resend smoke manually only after selecting a real sender and recipient.
+
+---
+
 # Session Handoff - 2026-05-02
 
 ## What was done

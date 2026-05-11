@@ -39,3 +39,27 @@ The session moved the project from "API-validated happy path" toward contract-en
 3. Add live smoke/E2E checks for booking creation, dispute open/resolve, review insertion, and featured listing activation.
 4. Tighten CSP with nonce/hash-based script policy and reporting.
 5. Move public browse/request filtering and pagination to server-side queries.
+
+# Retro - 2026-05-11 Conservative Maintenance Pass
+
+## Outcome
+
+This pass reconciled the GitHub source with the promoted snapshot, kept the change set offline-only, and focused on two low-risk maintenance fixes: Next.js server cookie compatibility for the Supabase SSR client and non-force lockfile audit repairs for Next/OpenNext dependencies.
+
+## What Went Well
+
+- The promoted snapshot already contained a small async-cookie fix, so the canonical repository could be brought forward without changing data contracts or production settings.
+- The dependency repair was lockfile-only, moved Next within the existing `^15.5.15` range, and kept the package manifest stable.
+- No production deployment, Supabase mutation, service-role probe, Resend send, or RLS change was needed.
+
+## What Stayed Out Of Scope
+
+- The local-only Resend smoke script was not promoted because email sends require an explicit manual owner action.
+- Live Supabase and hosted API validation remain manual boundaries.
+- Generated artifacts such as `node_modules`, `.next`, `.swc`, TypeScript build info, and local env files remain excluded from the promoted source snapshot.
+
+## Follow-Up Candidates
+
+1. Run a manual owner-approved Resend smoke only after a real sender and recipient are selected.
+2. Re-run hosted read-only checks after the next deployment, without printing row data or secrets.
+3. Consider generated Supabase `Database` types before adding new table-heavy features.

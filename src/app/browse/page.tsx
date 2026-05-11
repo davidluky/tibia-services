@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 async function getAllServiceiros(): Promise<ServiceiroWithProfile[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('serviceiro_profiles')

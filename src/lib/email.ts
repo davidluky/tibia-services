@@ -28,6 +28,18 @@ function bookingLink(bookingId: string): string {
   return `${BASE_URL}/bookings/${bookingId}`
 }
 
+async function sendEmail(label: string, payload: Parameters<Resend['emails']['send']>[0]) {
+  const r = getResend()
+  if (!r) return
+
+  const result = await r.emails.send(payload)
+  if (result.error) {
+    throw new Error(result.error.message)
+  }
+
+  console.info(`[email] ${label} sent:`, result.data?.id ?? 'unknown')
+}
+
 function emailHtml(title: string, body: string, bookingId: string): string {
   return `
 <!DOCTYPE html>
@@ -77,8 +89,7 @@ export async function sendBookingCreated(opts: {
   try {
     const to = await getEmail(opts.serviceiroId)
     if (!to) return
-    const r = getResend(); if (!r) return
-    await r.emails.send({
+    await sendEmail('sendBookingCreated', {
       from: FROM,
       to,
       subject: `Nova reserva de ${escapeHtml(opts.customerName)}`,
@@ -102,8 +113,7 @@ export async function sendBookingAccepted(opts: {
   try {
     const to = await getEmail(opts.customerId)
     if (!to) return
-    const r = getResend(); if (!r) return
-    await r.emails.send({
+    await sendEmail('sendBookingAccepted', {
       from: FROM,
       to,
       subject: `${escapeHtml(opts.serviceiroName)} aceitou sua reserva`,
@@ -127,8 +137,7 @@ export async function sendBookingDeclined(opts: {
   try {
     const to = await getEmail(opts.customerId)
     if (!to) return
-    const r = getResend(); if (!r) return
-    await r.emails.send({
+    await sendEmail('sendBookingDeclined', {
       from: FROM,
       to,
       subject: `${escapeHtml(opts.serviceiroName)} recusou sua reserva`,
@@ -151,8 +160,7 @@ export async function sendBookingCompleted(opts: {
   try {
     const to = await getEmail(opts.customerId)
     if (!to) return
-    const r = getResend(); if (!r) return
-    await r.emails.send({
+    await sendEmail('sendBookingCompleted', {
       from: FROM,
       to,
       subject: `Reserva concluída — avalie ${escapeHtml(opts.serviceiroName)}`,
@@ -176,8 +184,7 @@ export async function sendBookingCancelled(opts: {
   try {
     const to = await getEmail(opts.recipientId)
     if (!to) return
-    const r = getResend(); if (!r) return
-    await r.emails.send({
+    await sendEmail('sendBookingCancelled', {
       from: FROM,
       to,
       subject: `Reserva cancelada por ${escapeHtml(opts.cancellerName)}`,

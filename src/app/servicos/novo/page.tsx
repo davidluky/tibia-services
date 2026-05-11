@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { NewRequestForm } from './NewRequestForm'
 
 export default async function NewServiceRequestPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
