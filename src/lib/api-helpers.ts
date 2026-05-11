@@ -75,7 +75,7 @@ export function rejectOversizedRequest(
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
 export async function getAuthUser() {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   return { user, supabase }
 }
@@ -114,7 +114,7 @@ export async function requireAdmin() {
 // ─── Rate limiting ────────────────────────────────────────────────────────────
 
 export async function checkRateLimit(
-  supabase: ReturnType<typeof createClient>,
+  supabase: Awaited<ReturnType<typeof createClient>>,
   table: string,
   userIdColumn: string,
   userId: string,

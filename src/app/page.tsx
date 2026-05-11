@@ -4,7 +4,7 @@ import type { ServiceiroWithProfile } from '@/lib/types'
 import type { GameplayTypeKey } from '@/lib/constants'
 
 async function getFeaturedServiceiros(): Promise<ServiceiroWithProfile[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from('serviceiro_profiles')

@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const t = await getServerT()
 
   const { data: { user } } = await supabase.auth.getUser()

@@ -9,7 +9,7 @@ interface PageProps {
 
 export default async function BookingDetailPage(props: PageProps) {
   const params = await props.params;
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')

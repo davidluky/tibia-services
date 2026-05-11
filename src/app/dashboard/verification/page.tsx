@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { VerificationClient } from './VerificationClient'
 
 export default async function VerificationPage() {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')

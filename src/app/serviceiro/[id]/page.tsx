@@ -21,7 +21,7 @@ interface PageProps {
 
 export async function generateMetadata(props: PageProps) {
   const params = await props.params;
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: profile } = await supabase
     .from('profiles')
     .select('display_name, bio')
@@ -48,7 +48,7 @@ export async function generateMetadata(props: PageProps) {
 
 export default async function ServiceiroProfilePage(props: PageProps) {
   const params = await props.params;
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Get current user session
   const { data: { user } } = await supabase.auth.getUser()
