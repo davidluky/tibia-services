@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { HomeClient } from './HomeClient'
 import type { ServiceiroWithProfile } from '@/lib/types'
 import type { GameplayTypeKey } from '@/lib/constants'
+import { DEMO_PROFILE_ID_FILTER } from '@/lib/demo-profiles'
 
 async function getFeaturedServiceiros(): Promise<ServiceiroWithProfile[]> {
   const supabase = await createClient()
@@ -15,6 +16,7 @@ async function getFeaturedServiceiros(): Promise<ServiceiroWithProfile[]> {
     .eq('is_registered', true)
     .eq('profiles.is_banned', false)
     .eq('profiles.role', 'serviceiro')
+    .not('id', 'in', DEMO_PROFILE_ID_FILTER)
     .limit(6)
 
   if (error || !data || data.length === 0) return []
