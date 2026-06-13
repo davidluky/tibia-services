@@ -68,6 +68,44 @@ INSERT INTO auth.users (
   )
 ON CONFLICT (id) DO NOTHING;
 
+-- Direct auth.users inserts must also create matching auth.identities rows.
+-- Without these, Supabase Auth Admin APIs can fail with "Database error loading user".
+INSERT INTO auth.identities (
+  provider_id, user_id, identity_data, provider,
+  last_sign_in_at, created_at, updated_at
+) VALUES
+  (
+    'aaaaaaaa-aaaa-aaaa-aaaa-000000000001',
+    'aaaaaaaa-aaaa-aaaa-aaaa-000000000001',
+    jsonb_build_object('sub', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000001', 'email', 'knightmaster99@mock.dev', 'email_verified', true, 'phone_verified', false),
+    'email', now(), now(), now()
+  ),
+  (
+    'aaaaaaaa-aaaa-aaaa-aaaa-000000000002',
+    'aaaaaaaa-aaaa-aaaa-aaaa-000000000002',
+    jsonb_build_object('sub', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000002', 'email', 'sorcquestpro@mock.dev', 'email_verified', true, 'phone_verified', false),
+    'email', now(), now(), now()
+  ),
+  (
+    'aaaaaaaa-aaaa-aaaa-aaaa-000000000003',
+    'aaaaaaaa-aaaa-aaaa-aaaa-000000000003',
+    jsonb_build_object('sub', 'aaaaaaaa-aaaa-aaaa-aaaa-000000000003', 'email', 'palpaladine@mock.dev', 'email_verified', true, 'phone_verified', false),
+    'email', now(), now(), now()
+  ),
+  (
+    'bbbbbbbb-bbbb-bbbb-bbbb-000000000001',
+    'bbbbbbbb-bbbb-bbbb-bbbb-000000000001',
+    jsonb_build_object('sub', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000001', 'email', 'mockcustomer1@mock.dev', 'email_verified', true, 'phone_verified', false),
+    'email', now(), now(), now()
+  ),
+  (
+    'bbbbbbbb-bbbb-bbbb-bbbb-000000000002',
+    'bbbbbbbb-bbbb-bbbb-bbbb-000000000002',
+    jsonb_build_object('sub', 'bbbbbbbb-bbbb-bbbb-bbbb-000000000002', 'email', 'mockbuyer99@mock.dev', 'email_verified', true, 'phone_verified', false),
+    'email', now(), now(), now()
+  )
+ON CONFLICT (provider_id, provider) DO NOTHING;
+
 -- ── Step 2: Fill in bio/contact (trigger only sets role + display_name) ──
 UPDATE profiles SET
   bio     = 'Elite Knight com 10 anos de Tibia. Especialista em hunts solo e duo em qualquer spawn do jogo. Preço justo e serviço rápido. Disponível todos os dias!',
