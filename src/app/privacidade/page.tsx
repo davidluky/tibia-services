@@ -2,6 +2,8 @@ export const metadata = {
   title: 'Política de Privacidade — Tibia Services',
 }
 
+export const dynamic = 'force-static'
+
 export default function PrivacidadePage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
