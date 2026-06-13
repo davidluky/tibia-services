@@ -2,6 +2,8 @@ export const metadata = {
   title: 'Termos de Uso — Tibia Services',
 }
 
+export const dynamic = 'force-static'
+
 export default function TermosPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
