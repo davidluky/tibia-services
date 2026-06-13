@@ -4,6 +4,7 @@ import { BrowseClient } from './BrowseClient'
 import type { ServiceiroWithProfile } from '@/lib/types'
 import type { GameplayTypeKey } from '@/lib/constants'
 import type { Metadata } from 'next'
+import { DEMO_PROFILE_ID_FILTER } from '@/lib/demo-profiles'
 
 export const metadata: Metadata = {
   title: 'Buscar Serviceiros | Tibia Services',
@@ -21,6 +22,7 @@ async function getAllServiceiros(): Promise<ServiceiroWithProfile[]> {
     `)
     .eq('profiles.is_banned', false)
     .eq('profiles.role', 'serviceiro')
+    .not('id', 'in', DEMO_PROFILE_ID_FILTER)
 
   if (error || !data || data.length === 0) return []
 
