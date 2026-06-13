@@ -12,6 +12,7 @@ import { ServiceiroStats } from '@/components/serviceiro/ServiceiroStats'
 import { ServiceiroSummaryLine } from '@/components/serviceiro/ServiceiroSummaryLine'
 import { VOCATIONS, GAMEPLAY_TYPES } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
+import { isDemoProfileId } from '@/lib/demo-profiles'
 import type { Review } from '@/lib/types'
 import type { GameplayTypeKey } from '@/lib/constants'
 
@@ -95,6 +96,7 @@ export default async function ServiceiroProfilePage(props: PageProps) {
   const avg_rating = reviews && reviews.length > 0
     ? reviews.reduce((sum: number, r: Review) => sum + r.rating, 0) / reviews.length
     : null
+  const isDemoProfile = isDemoProfileId(params.id)
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -106,6 +108,11 @@ export default async function ServiceiroProfilePage(props: PageProps) {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h1 className="text-2xl font-bold text-text-primary">{profile.display_name}</h1>
+                {isDemoProfile && (
+                  <p className="mt-2 inline-flex rounded-md border border-status-warning/40 bg-status-warning/10 px-2.5 py-1 text-xs font-semibold text-status-warning">
+                    Perfil demonstrativo — não é um serviceiro real
+                  </p>
+                )}
                 {avg_rating !== null && (
                   <div className="flex items-center gap-2 mt-2">
                     <Stars rating={avg_rating} size="md" />
