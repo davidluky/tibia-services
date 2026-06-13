@@ -1,11 +1,14 @@
-import { createClient } from '@/lib/supabase/server'
+import { createPublicServerClient } from '@/lib/supabase/public'
 import { HomeClient } from './HomeClient'
 import type { ServiceiroWithProfile } from '@/lib/types'
 import type { GameplayTypeKey } from '@/lib/constants'
 import { DEMO_PROFILE_ID_FILTER } from '@/lib/demo-profiles'
 
+export const revalidate = 300
+export const dynamic = 'force-static'
+
 async function getFeaturedServiceiros(): Promise<ServiceiroWithProfile[]> {
-  const supabase = await createClient()
+  const supabase = createPublicServerClient()
 
   const { data, error } = await supabase
     .from('serviceiro_profiles')
