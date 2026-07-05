@@ -3,6 +3,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useLanguage } from '@/lib/language-context'
 import { ServiceRequestCard } from '@/components/servicerequest/ServiceRequestCard'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { HuntIcon } from '@/components/ui/icons'
 import type { ServiceRequest } from '@/lib/types'
 import { ServiceRequestFilters, DEFAULT_REQUEST_FILTERS, type RequestFilters } from '@/components/servicerequest/ServiceRequestFilters'
 
@@ -40,6 +42,9 @@ export function ServiceRequestsClient({ requests, isServiceiro, isCustomer, isLo
   const [filtersOpen, setFiltersOpen] = useState(false)
 
   const filtered = applyRequestFilters(requests, filters)
+  const hasActiveFilters = filters.service_types.length > 0
+    || filters.time_preference !== DEFAULT_REQUEST_FILTERS.time_preference
+    || filters.budget !== DEFAULT_REQUEST_FILTERS.budget
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -77,7 +82,27 @@ export function ServiceRequestsClient({ requests, isServiceiro, isCustomer, isLo
         {/* Results */}
         <div className="flex-1">
           {filtered.length === 0 ? (
-            <p className="text-text-muted text-sm py-8">{t('requests_empty')}</p>
+            <EmptyState
+              icon={HuntIcon}
+              title={t('requests_empty')}
+              description={t('requests_empty_desc')}
+              action={hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={() => setFilters(DEFAULT_REQUEST_FILTERS)}
+                  className="rounded-md border border-gold/30 px-4 py-2 text-sm font-semibold text-gold transition-colors hover:border-gold hover:text-gold-bright"
+                >
+                  {t('requests_filter_clear')}
+                </button>
+              ) : isCustomer ? (
+                <Link
+                  href="/servicos/novo"
+                  className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-bg-primary transition-colors hover:bg-gold-bright"
+                >
+                  {t('requests_post_btn')}
+                </Link>
+              ) : undefined}
+            />
           ) : (
             <div className="space-y-4">
               {filtered.map(r => (
