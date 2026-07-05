@@ -49,6 +49,7 @@ export const translations = {
 
     // ServiceiroCard
     card_registered_badge: '✓ Registrado',
+    card_featured_badge: '★ Destacado',
 
     // ServiceiroFilters
     filter_vocation_label: 'Vocação',
@@ -212,7 +213,7 @@ export const translations = {
     home_hero_title_1: 'Encontre seu',
     home_hero_title_2: 'de Confiança',
     home_hero_subtitle: 'Contrate players experientes para hunts, quests, KS/PK e mais. Pagamento em Tibia Coins — seguro, simples, confiável.',
-    home_cta_browse: 'Buscar Serviceiros',
+    home_cta_browse: 'Encontrar serviceiro',
     home_cta_register: 'Criar Conta',
     home_stat_tc: 'TC apenas',
     home_stat_services: 'tipos de serviço',
@@ -226,8 +227,14 @@ export const translations = {
     home_how_step3_desc: 'Após o serviço, deixe uma avaliação para ajudar a comunidade.',
     home_featured_title: 'Serviceiros em Destaque',
     home_featured_view_all: 'Ver todos →',
-    home_cta_requests: 'Ver serviços para fazer',
+    home_cta_requests: 'Quero trabalhar',
     home_cta_register_secondary: 'Criar Conta',
+    home_trust_verified_title: 'Personagem verificado',
+    home_trust_verified_desc: 'Validação com TibiaData antes do badge Registrado.',
+    home_trust_payment_title: 'Pagamento confirmado em dupla',
+    home_trust_payment_desc: 'Cliente e serviceiro marcam envio e recebimento de TC.',
+    home_trust_reviews_title: 'Avaliações reais',
+    home_trust_reviews_desc: 'Notas aparecem após serviços concluídos.',
 
     // Service requests page
     requests_page_title: 'Serviços Procurados',
@@ -474,6 +481,7 @@ export const translations = {
     browse_result_count_plural: 'results',
     browse_filters_btn: 'Filters',
     card_registered_badge: '✓ Registered',
+    card_featured_badge: '★ Featured',
     filter_vocation_label: 'Vocation',
     filter_gameplay_label: 'Service type',
     filter_weekday_label: 'Available day',
@@ -621,7 +629,7 @@ export const translations = {
     home_hero_title_1: 'Find your trusted',
     home_hero_title_2: '',
     home_hero_subtitle: 'Hire experienced players for hunts, quests, KS/PK and more. Payment in Tibia Coins — safe, simple, reliable.',
-    home_cta_browse: 'Browse Serviceiros',
+    home_cta_browse: 'Find a serviceiro',
     home_cta_register: 'Create Account',
     home_stat_tc: 'TC only',
     home_stat_services: 'service types',
@@ -635,8 +643,14 @@ export const translations = {
     home_how_step3_desc: 'After the service, leave a review to help the community.',
     home_featured_title: 'Featured Serviceiros',
     home_featured_view_all: 'View all →',
-    home_cta_requests: 'Browse service requests',
+    home_cta_requests: 'I want to work',
     home_cta_register_secondary: 'Create Account',
+    home_trust_verified_title: 'Verified character',
+    home_trust_verified_desc: 'TibiaData validation before the Registered badge appears.',
+    home_trust_payment_title: 'Dual payment confirmation',
+    home_trust_payment_desc: 'Customer and serviceiro both confirm sent and received TC.',
+    home_trust_reviews_title: 'Real reviews',
+    home_trust_reviews_desc: 'Ratings appear after completed services.',
 
     // Service requests page
     requests_page_title: 'Service Requests',
@@ -883,6 +897,7 @@ export const translations = {
     browse_result_count_plural: 'resultados',
     browse_filters_btn: 'Filtros',
     card_registered_badge: '✓ Registrado',
+    card_featured_badge: '★ Destacado',
     filter_vocation_label: 'Vocación',
     filter_gameplay_label: 'Tipo de servicio',
     filter_weekday_label: 'Día disponible',
@@ -1030,7 +1045,7 @@ export const translations = {
     home_hero_title_1: 'Encuentra tu',
     home_hero_title_2: 'de Confianza',
     home_hero_subtitle: 'Contrata players experimentados para hunts, quests, KS/PK y más. Pago en Tibia Coins — seguro, simple, confiable.',
-    home_cta_browse: 'Buscar Serviceiros',
+    home_cta_browse: 'Encontrar serviceiro',
     home_cta_register: 'Crear Cuenta',
     home_stat_tc: 'solo TC',
     home_stat_services: 'tipos de servicio',
@@ -1044,8 +1059,14 @@ export const translations = {
     home_how_step3_desc: 'Tras el servicio, deja una reseña para ayudar a la comunidad.',
     home_featured_title: 'Serviceiros Destacados',
     home_featured_view_all: 'Ver todos →',
-    home_cta_requests: 'Ver pedidos de servicio',
+    home_cta_requests: 'Quiero trabajar',
     home_cta_register_secondary: 'Crear Cuenta',
+    home_trust_verified_title: 'Personaje verificado',
+    home_trust_verified_desc: 'Validación con TibiaData antes del badge Registrado.',
+    home_trust_payment_title: 'Pago confirmado por ambos',
+    home_trust_payment_desc: 'Cliente y serviceiro marcan TC enviado y recibido.',
+    home_trust_reviews_title: 'Reseñas reales',
+    home_trust_reviews_desc: 'Las notas aparecen después de servicios concluidos.',
 
     // Service requests page
     requests_page_title: 'Pedidos de Servicio',

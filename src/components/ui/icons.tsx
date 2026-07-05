@@ -61,6 +61,19 @@ export function DruidIcon(props: FantasyIconProps) {
   )
 }
 
+export function MonkIcon(props: FantasyIconProps) {
+  return (
+    <svg {...baseIconProps} aria-hidden="true" {...props}>
+      <path d="M12 3.5v17" />
+      <path d="M7.2 7.7c1.3-1 2.9-1.5 4.8-1.5s3.5.5 4.8 1.5" />
+      <path d="M7 12h10" />
+      <path d="M8.1 15.9c1.2 1 2.5 1.5 3.9 1.5s2.7-.5 3.9-1.5" />
+      <path d="M5.4 9.7 3.8 8.4" />
+      <path d="m18.6 9.7 1.6-1.3" />
+    </svg>
+  )
+}
+
 export function HuntIcon(props: FantasyIconProps) {
   return (
     <svg {...baseIconProps} aria-hidden="true" {...props}>
