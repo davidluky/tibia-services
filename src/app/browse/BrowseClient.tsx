@@ -3,8 +3,18 @@ import { useState, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { ServiceiroFilters, type Filters } from '@/components/serviceiro/ServiceiroFilters'
 import { ServiceiroCard } from '@/components/serviceiro/ServiceiroCard'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { QuestIcon } from '@/components/ui/icons'
 import type { ServiceiroWithProfile } from '@/lib/types'
 import { useLanguage } from '@/lib/language-context'
+
+const EMPTY_FILTERS: Filters = {
+  vocations: [],
+  gameplay_types: [],
+  weekdays: [],
+  registered_only: false,
+  search: '',
+}
 
 function applyFilters(serviceiros: ServiceiroWithProfile[], filters: Filters): ServiceiroWithProfile[] {
   return serviceiros.filter(s => {
@@ -60,6 +70,13 @@ export function BrowseClient({ serviceiros, initialFilters }: BrowseClientProps)
   }, [pathname, router])
 
   const filtered = applyFilters(serviceiros, filters)
+  const hasActiveFilters = Boolean(
+    filters.search
+      || filters.registered_only
+      || filters.vocations.length > 0
+      || filters.gameplay_types.length > 0
+      || filters.weekdays.length > 0,
+  )
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -82,10 +99,20 @@ export function BrowseClient({ serviceiros, initialFilters }: BrowseClientProps)
 
         <div className="flex-1">
           {filtered.length === 0 ? (
-            <div className="text-center py-20 text-text-muted">
-              <p className="text-4xl mb-4">⚔</p>
-              <p className="text-lg font-medium text-text-primary mb-2">{t('browse_empty')}</p>
-            </div>
+            <EmptyState
+              icon={QuestIcon}
+              title={t('browse_empty')}
+              description={t('browse_empty_desc')}
+              action={hasActiveFilters ? (
+                <button
+                  type="button"
+                  onClick={() => handleFilterChange(EMPTY_FILTERS)}
+                  className="rounded-md border border-gold/30 px-4 py-2 text-sm font-semibold text-gold transition-colors hover:border-gold hover:text-gold-bright"
+                >
+                  {t('filter_clear')}
+                </button>
+              ) : undefined}
+            />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtered.map(s => (

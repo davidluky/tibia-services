@@ -1,6 +1,9 @@
+import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getServerLocale, getServerT } from '@/lib/i18n-server'
 import { type Locale } from '@/lib/i18n'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { CoinIcon, VerifiedIcon } from '@/components/ui/icons'
 import { FeaturedConfirmForm } from './FeaturedConfirmForm'
 
 function hoursAgo(iso: string): number {
@@ -43,7 +46,17 @@ export default async function AdminFeaturedPage() {
       <section className="mb-10">
         <h3 className="text-lg font-semibold text-text-primary mb-4">{t('admin_featured_pending_section')}</h3>
         {!pending || pending.length === 0 ? (
-          <p className="text-text-muted text-sm">{t('admin_featured_no_pending')}</p>
+          <EmptyState
+            compact
+            icon={CoinIcon}
+            title={t('admin_featured_no_pending')}
+            description={t('admin_featured_no_pending_desc')}
+            action={(
+              <Link href="/admin" className="rounded-md border border-gold/30 px-4 py-2 text-sm font-semibold text-gold transition-colors hover:border-gold hover:text-gold-bright">
+                {t('admin_empty_back_home')}
+              </Link>
+            )}
+          />
         ) : (
           <div className="space-y-4">
             {pending.map((listing) => {
@@ -81,7 +94,17 @@ export default async function AdminFeaturedPage() {
       <section>
         <h3 className="text-lg font-semibold text-text-primary mb-4">{t('admin_featured_active_section')}</h3>
         {!active || active.length === 0 ? (
-          <p className="text-text-muted text-sm">{t('admin_featured_no_active')}</p>
+          <EmptyState
+            compact
+            icon={VerifiedIcon}
+            title={t('admin_featured_no_active')}
+            description={t('admin_featured_no_active_desc')}
+            action={(
+              <Link href="/admin" className="rounded-md border border-gold/30 px-4 py-2 text-sm font-semibold text-gold transition-colors hover:border-gold hover:text-gold-bright">
+                {t('admin_empty_back_home')}
+              </Link>
+            )}
+          />
         ) : (
           <div className="space-y-3">
             {active.map((listing) => {

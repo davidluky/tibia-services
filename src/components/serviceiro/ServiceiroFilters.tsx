@@ -1,4 +1,9 @@
 'use client'
+import {
+  getGameplayTypeIcon,
+  getVocationIcon,
+  type ServiceiroIcon,
+} from '@/components/serviceiro/iconMaps'
 import { VOCATIONS, GAMEPLAY_TYPES, WEEKDAYS } from '@/lib/constants'
 import { useLanguage } from '@/lib/language-context'
 
@@ -13,6 +18,12 @@ export interface Filters {
 interface FiltersProps {
   filters: Filters
   onChange: (filters: Filters) => void
+}
+
+interface FilterItem {
+  key: string
+  label: string
+  icon?: ServiceiroIcon
 }
 
 export function ServiceiroFilters({ filters, onChange }: FiltersProps) {
@@ -53,7 +64,7 @@ export function ServiceiroFilters({ filters, onChange }: FiltersProps) {
       {/* Vocations */}
       <FilterGroup
         title={t('filter_vocation_label')}
-        items={VOCATIONS.map(v => ({ key: v.key, label: v.label }))}
+        items={VOCATIONS.map(v => ({ key: v.key, label: v.label, icon: getVocationIcon(v.key) }))}
         selected={filters.vocations}
         onToggle={key => toggle('vocations', key)}
         activeStyle="bg-gold/10 text-gold border-gold/30"
@@ -62,7 +73,7 @@ export function ServiceiroFilters({ filters, onChange }: FiltersProps) {
       {/* Gameplay types */}
       <FilterGroup
         title={t('filter_gameplay_label')}
-        items={GAMEPLAY_TYPES.map(g => ({ key: g.key, label: g.label }))}
+        items={GAMEPLAY_TYPES.map(g => ({ key: g.key, label: g.label, icon: getGameplayTypeIcon(g.key) }))}
         selected={filters.gameplay_types}
         onToggle={key => toggle('gameplay_types', key)}
         activeStyle="bg-blue-500/10 text-blue-400 border-blue-500/30"
@@ -84,7 +95,7 @@ function FilterGroup({
   title, items, selected, onToggle, activeStyle,
 }: {
   title: string
-  items: { key: string; label: string }[]
+  items: FilterItem[]
   selected: string[]
   onToggle: (key: string) => void
   activeStyle: string
@@ -95,21 +106,26 @@ function FilterGroup({
         {title}
       </h3>
       <div className="flex flex-wrap gap-2">
-        {items.map(item => (
-          <button
-            key={item.key}
-            onClick={() => onToggle(item.key)}
-            className={`
-              px-3 py-1 rounded-full text-xs border transition-colors cursor-pointer
-              ${selected.includes(item.key)
-                ? activeStyle
-                : 'border-border text-text-muted hover:border-gold/30'
-              }
-            `}
-          >
-            {item.label}
-          </button>
-        ))}
+        {items.map(item => {
+          const Icon = item.icon
+
+          return (
+            <button
+              key={item.key}
+              onClick={() => onToggle(item.key)}
+              className={`
+                inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs border transition-colors cursor-pointer
+                ${selected.includes(item.key)
+                  ? activeStyle
+                  : 'border-border text-text-muted hover:border-gold/30'
+                }
+              `}
+            >
+              {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
+              <span>{item.label}</span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )

@@ -3,7 +3,10 @@ import { formatDate } from '@/lib/utils'
 import { getServerT } from '@/lib/i18n-server'
 import { HideReviewButton } from './HideReviewButton'
 import { Stars } from '@/components/ui/Stars'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { VerifiedIcon } from '@/components/ui/icons'
 import { truncate } from '@/lib/utils'
+import Link from 'next/link'
 
 export default async function ReviewsPage(
   props: {
@@ -35,7 +38,16 @@ export default async function ReviewsPage(
       <h2 className="text-2xl font-bold text-text-primary mb-6">{t('admin_reviews_title')}</h2>
 
       {!reviews || reviews.length === 0 ? (
-        <p className="text-text-muted">{t('admin_reviews_empty')}</p>
+        <EmptyState
+          icon={VerifiedIcon}
+          title={t('admin_reviews_empty')}
+          description={t('admin_reviews_empty_desc')}
+          action={(
+            <Link href="/admin" className="rounded-md border border-gold/30 px-4 py-2 text-sm font-semibold text-gold transition-colors hover:border-gold hover:text-gold-bright">
+              {t('admin_empty_back_home')}
+            </Link>
+          )}
+        />
       ) : (
         <>
           <div className="overflow-x-auto">

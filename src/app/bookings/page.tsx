@@ -2,8 +2,11 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Card } from '@/components/ui/Card'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { QuestIcon } from '@/components/ui/icons'
 import { GAMEPLAY_TYPES } from '@/lib/constants'
 import { formatDate } from '@/lib/utils'
+import { getServerT } from '@/lib/i18n-server'
 import type { Booking } from '@/lib/types'
 import type { Metadata } from 'next'
 
@@ -37,6 +40,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default async function BookingsPage() {
   const supabase = await createClient()
+  const t = await getServerT()
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/auth/login')
@@ -62,13 +66,16 @@ export default async function BookingsPage() {
       <h1 className="text-3xl font-bold text-text-primary mb-8">Minhas Reservas</h1>
 
       {(bookings?.length ?? 0) === 0 ? (
-        <div className="text-center py-20 text-text-muted">
-          <p className="text-4xl mb-4">📋</p>
-          <p className="text-lg font-medium text-text-primary mb-2">Nenhuma reserva ainda</p>
-          <Link href="/browse" className="text-gold hover:text-gold-bright text-sm">
-            Buscar serviceiros →
-          </Link>
-        </div>
+        <EmptyState
+          icon={QuestIcon}
+          title={t('bookings_empty_title')}
+          description={t('bookings_empty_desc')}
+          action={(
+            <Link href="/browse" className="rounded-md bg-gold px-4 py-2 text-sm font-semibold text-bg-primary transition-colors hover:bg-gold-bright">
+              {t('bookings_empty_cta')}
+            </Link>
+          )}
+        />
       ) : (
         <div className="space-y-8">
           {groups.active.length > 0 && (

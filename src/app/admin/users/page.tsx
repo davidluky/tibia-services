@@ -1,6 +1,9 @@
+import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { formatDate } from '@/lib/utils'
 import { getServerT } from '@/lib/i18n-server'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { VerifiedIcon } from '@/components/ui/icons'
 import { UserActions } from './UserActions'
 
 export default async function UsersPage(
@@ -45,7 +48,19 @@ export default async function UsersPage(
       </form>
 
       {!users || users.length === 0 ? (
-        <p className="text-text-muted">{t('admin_users_empty')}</p>
+        <EmptyState
+          icon={VerifiedIcon}
+          title={t('admin_users_empty')}
+          description={t('admin_users_empty_desc')}
+          action={(
+            <Link
+              href={search ? '/admin/users' : '/admin'}
+              className="rounded-md border border-gold/30 px-4 py-2 text-sm font-semibold text-gold transition-colors hover:border-gold hover:text-gold-bright"
+            >
+              {search ? t('admin_users_clear_search') : t('admin_empty_back_home')}
+            </Link>
+          )}
+        />
       ) : (
         <>
           <div className="overflow-x-auto">

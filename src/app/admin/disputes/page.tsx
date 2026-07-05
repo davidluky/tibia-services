@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getServerT } from '@/lib/i18n-server'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { ShieldCheckIcon } from '@/components/ui/icons'
 import { DisputeResolveForm } from './DisputeResolveForm'
 
 export default async function AdminDisputesPage(
@@ -34,7 +36,16 @@ export default async function AdminDisputesPage(
       <h2 className="text-2xl font-bold text-text-primary mb-6">{t('admin_disputes_title')}</h2>
 
       {!disputes || disputes.length === 0 ? (
-        <p className="text-text-muted">{t('admin_disputes_empty')}</p>
+        <EmptyState
+          icon={ShieldCheckIcon}
+          title={t('admin_disputes_empty')}
+          description={t('admin_disputes_empty_desc')}
+          action={(
+            <Link href="/admin" className="rounded-md border border-gold/30 px-4 py-2 text-sm font-semibold text-gold transition-colors hover:border-gold hover:text-gold-bright">
+              {t('admin_empty_back_home')}
+            </Link>
+          )}
+        />
       ) : (
         <>
           <div className="space-y-6">

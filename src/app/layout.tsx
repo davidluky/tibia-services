@@ -14,17 +14,23 @@ const HTML_LANG_BY_LOCALE = {
 
 export const metadata: Metadata = {
   metadataBase: new URL((process.env.APP_URL ?? 'https://tibia.davidluky.com').replace(/\/$/, '')),
-  title: 'Tibia Services — Encontre seu Serviceiro',
-  description: 'Marketplace de serviceiros para Tibia. Encontre players confiáveis para hunts, quests, e mais.',
+  title: {
+    default: 'Tibia Services — Encontre seu Serviceiro',
+    template: '%s | Tibia Services',
+  },
+  description: 'Marketplace de serviceiros para Tibia. Encontre players confiáveis para hunts, quests e mais.',
   openGraph: {
     title: 'Tibia Services — Encontre seu Serviceiro',
-    description: 'Marketplace de serviceiros para Tibia. Encontre players confiáveis para hunts, quests, e mais.',
+    description: 'Marketplace de serviceiros para Tibia. Encontre players confiáveis para hunts, quests e mais.',
     type: 'website',
+    locale: 'pt_BR',
+    alternateLocale: ['en_US', 'es_ES'],
+    siteName: 'Tibia Services',
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Tibia Services — Encontre seu Serviceiro',
-    description: 'Marketplace de serviceiros para Tibia. Encontre players confiáveis para hunts, quests, e mais.',
+    description: 'Marketplace de serviceiros para Tibia. Encontre players confiáveis para hunts, quests e mais.',
   },
 }
 

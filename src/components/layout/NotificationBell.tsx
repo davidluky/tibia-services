@@ -1,6 +1,8 @@
 'use client'
 import { useState, useCallback, useEffect, useId, useRef } from 'react'
 import Link from 'next/link'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { VerifiedIcon } from '@/components/ui/icons'
 import { useLanguage } from '@/lib/language-context'
 import { timeAgo } from '@/lib/utils'
 import type { Notification } from '@/lib/types'
@@ -109,7 +111,14 @@ export function NotificationBell() {
             <h3 id={titleId} className="text-sm font-semibold text-text-primary">{t('notif_title')}</h3>
           </div>
           {notifications.length === 0 ? (
-            <p role="status" className="text-text-muted text-sm px-4 py-6 text-center">{t('notif_empty')}</p>
+            <div className="p-3">
+              <EmptyState
+                compact
+                icon={VerifiedIcon}
+                title={t('notif_empty')}
+                description={t('notif_empty_desc')}
+              />
+            </div>
           ) : (
             <div role="list" className="divide-y divide-border">
               {notifications.map(n => (
