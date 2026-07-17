@@ -11,6 +11,7 @@ export function NotificationBell() {
   const { t, lang } = useLanguage()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [open, setOpen] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
   const dropdownId = useId()
@@ -24,12 +25,13 @@ export function NotificationBell() {
   const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch('/api/notifications')
-      if (res.ok) {
-        const data = await res.json()
-        setNotifications(data)
-      }
+      if (!res.ok) throw new Error('notification_fetch_failed')
+      const data: unknown = await res.json()
+      if (!Array.isArray(data)) throw new Error('notification_payload_invalid')
+      setNotifications(data as Notification[])
+      setLoadError(false)
     } catch {
-      // silent
+      setLoadError(true)
     }
   }, [])
 
@@ -65,11 +67,18 @@ export function NotificationBell() {
     const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id)
     if (unreadIds.length === 0) return
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
-    await fetch('/api/notifications', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ids: unreadIds }),
-    })
+    try {
+      const res = await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: unreadIds }),
+      })
+      if (!res.ok) throw new Error('notification_update_failed')
+    } catch {
+      const unreadIdSet = new Set(unreadIds)
+      setNotifications(prev => prev.map(n => unreadIdSet.has(n.id) ? { ...n, is_read: false } : n))
+      setLoadError(true)
+    }
   }
 
   return (
@@ -110,7 +119,18 @@ export function NotificationBell() {
           <div className="px-4 py-3 border-b border-border">
             <h3 id={titleId} className="text-sm font-semibold text-text-primary">{t('notif_title')}</h3>
           </div>
-          {notifications.length === 0 ? (
+          {loadError ? (
+            <div role="alert" className="p-4 text-sm">
+              <p className="text-status-error">{t('error_generic')}</p>
+              <button
+                type="button"
+                onClick={() => void fetchNotifications()}
+                className="mt-2 text-gold hover:text-gold-bright underline"
+              >
+                {t('error_retry')}
+              </button>
+            </div>
+          ) : notifications.length === 0 ? (
             <div className="p-3">
               <EmptyState
                 compact

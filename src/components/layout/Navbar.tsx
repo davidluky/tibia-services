@@ -87,7 +87,7 @@ export function Navbar() {
           onClick={() => setMenuOpen(prev => !prev)}
           aria-controls={mobileMenuId}
           aria-expanded={menuOpen}
-          aria-label="Toggle menu"
+          aria-label={t('nav_toggle_menu')}
         >
           {menuOpen ? '✕' : '☰'}
         </button>

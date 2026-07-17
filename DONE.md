@@ -72,7 +72,7 @@ A complete full-stack marketplace website for Tibia game services.
 
 **Tech files**
 - `supabase/schema.sql` — base DB schema, RLS, triggers, indexes
-- `supabase/migrations/` — incremental migration files (001–009); run after `schema.sql`
+- `supabase/migrations/` — incremental migration files (001–010); run after `schema.sql`
 - `src/lib/constants.ts` — vocations, gameplay types, weekdays, TC limits
 - `src/lib/types.ts` — all TypeScript types matching DB schema
 - `src/lib/utils.ts` — TC validation, date helpers, string helpers
@@ -84,11 +84,13 @@ A complete full-stack marketplace website for Tibia game services.
 
 ## What You Need To Do Next
 
-These steps cannot be automated — they require your Supabase account and credentials.
+These steps describe a fresh environment. The canonical production site is
+currently `https://tibia.davidluky.com` on Vercel; do not repeat account or
+database setup against production unless that is the explicit task.
 
 ### 1. Install Node.js (if not done)
-- Download from https://nodejs.org (LTS version)
-- Verify: `node --version` should show v18 or higher
+- Install Node.js 24 with npm 11.
+- Verify: `node --version` should show `v24.x` and `npm --version` should show `11.x`.
 
 ### 2. Create a Supabase project
 - Go to https://supabase.com → New Project → name it `tibia-services`
@@ -112,8 +114,8 @@ Copy `.env.local.example` to `.env.local` and fill in your Supabase keys.
 
 ### 7. Install dependencies and run
 ```bash
-cd C:/Users/david/OneDrive/Desktop/Programas/tibia-services
-npm install
+cd <path-to-tibia-services>
+npm ci
 npm run dev
 ```
 Open http://localhost:3000
@@ -131,7 +133,11 @@ AND EXISTS (
 ```
 
 ### 9. Deploy to Vercel
-- Push to GitHub, import in Vercel, add all 7 env vars from `.env.local.example`, deploy
+- Vercel is the canonical production host for `tibia.davidluky.com`.
+- Push the reviewed tree to the Vercel-connected production branch, or run
+  `vercel --prod` from that exact tree with an authenticated Vercel CLI.
+- A dashboard redeploy of an older build does not include unpushed local fixes.
+- Cloudflare/OpenNext packaging is optional and is not the live production path.
 
 ---
 

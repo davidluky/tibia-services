@@ -51,6 +51,16 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
+  const { data: actorProfile } = await supabase
+    .from('profiles')
+    .select('id, is_banned')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (!actorProfile || actorProfile.is_banned) {
+    return forbidden('Conta suspensa.')
+  }
+
   // Fetch the booking to verify participant status
   const { data: booking } = await supabase
     .from('bookings')
@@ -83,7 +93,7 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
   const serviceiroName = participantProfiles?.find(p => p.id === booking.serviceiro_id)?.display_name ?? 'Serviceiro'
 
   let update: Record<string, unknown> = {}
-  let pendingEmail: (() => void) | null = null
+  let pendingEmail: (() => Promise<void>) | null = null
   const pendingNotifications: (() => Promise<void>)[] = []
   const bookingLink = `/bookings/${params.id}`
 
@@ -179,7 +189,7 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
 
   if (error) return serverError('Erro ao atualizar reserva.')
 
-  pendingEmail?.()
+  await pendingEmail?.()
   await Promise.all(pendingNotifications.map(fn => fn()))
 
   return NextResponse.json({ success: true })

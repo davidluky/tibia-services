@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js 18+ ([download](https://nodejs.org))
+- Node.js 24 and npm 11 (see `package.json` and `.nvmrc`)
 - A Supabase project ([supabase.com](https://supabase.com))
 - A Resend API key ([resend.com](https://resend.com)) -- for email notifications
 
@@ -11,7 +11,7 @@
 See [SETUP.md](SETUP.md) for the full 10-step guide covering Supabase setup, database schema, storage buckets, and admin account creation.
 
 ```bash
-npm install
+npm ci
 cp .env.local.example .env.local   # Fill in your keys
 npm run dev                         # http://localhost:3000
 ```
@@ -22,7 +22,7 @@ npm run dev                         # http://localhost:3000
 |---------|-------------|
 | `npm run dev` | Start dev server |
 | `npm run build` | Production build |
-| `npm run package` | Build and adapt the app for Cloudflare Workers |
+| `npm run package` | Optional: build and adapt the app for Cloudflare Workers |
 | `npm run lint` | ESLint CLI with zero-warning gate |
 | `npm run typecheck` | TypeScript check without emit |
 | `npm run audit` | npm dependency audit (moderate+) |
@@ -81,8 +81,11 @@ Run with `npm test`. Tests use Jest + React Testing Library.
 
 ## Deployment
 
-1. Push to GitHub
-2. Add environment variables (see CLAUDE.md for the full list)
-3. Deploy with Cloudflare Workers (`npm run package && npx opennextjs-cloudflare deploy`) or Vercel (`vercel --prod`)
+1. Run `npm run quality` against the exact working tree that will ship.
+2. Push that reviewed tree to the Vercel-connected production branch (preferred), or run `vercel --prod` from that exact tree with an authenticated Vercel CLI.
+3. Confirm all environment variables from `CLAUDE.md` are configured in Vercel.
+4. Verify `https://tibia.davidluky.com` after deployment.
 
-The `npm run quality` command must succeed locally before deploying.
+Vercel is the canonical production host. Cloudflare Workers support is optional
+and inactive; validate it with `npm run package` only when intentionally working
+on that portability path.

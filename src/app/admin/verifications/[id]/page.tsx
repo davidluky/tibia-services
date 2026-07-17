@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdminPage } from '@/lib/admin-auth'
 import { formatDate } from '@/lib/utils'
 import { getServerT } from '@/lib/i18n-server'
 import { VerificationActions } from './VerificationActions'
@@ -10,7 +10,7 @@ interface PageProps {
 
 export default async function VerificationDetailPage(props: PageProps) {
   const params = await props.params;
-  const admin = createAdminClient()
+  const { adminClient: admin } = await requireAdminPage()
   const t = await getServerT()
 
   const { data: req } = await admin

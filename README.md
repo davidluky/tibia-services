@@ -20,9 +20,12 @@ A marketplace for Tibia game services -- connect with verified serviceiros for h
 
 ## Quick Start
 
+Requirements: Node.js 24 and npm 11. The repository pins these versions in
+`package.json` and `.nvmrc`.
+
 ```bash
 # 1. Install dependencies
-npm install
+npm ci
 
 # 2. Create .env.local from .env.local.example and fill in your Supabase + Resend keys
 
@@ -31,6 +34,13 @@ npm run dev
 ```
 
 See [SETUP.md](SETUP.md) for the full 10-step beginner guide.
+
+## Production
+
+The canonical production deployment is `https://tibia.davidluky.com` on
+Vercel. Cloudflare/OpenNext packaging remains an optional portability check; it
+is not the live production path. See
+[`docs/DEPLOY-CHECKLIST.md`](docs/DEPLOY-CHECKLIST.md) before deploying.
 
 ## Documentation
 

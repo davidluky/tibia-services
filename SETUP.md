@@ -1,6 +1,6 @@
 # Tibia Services — Setup Guide
 
-> Last reviewed: 2026-04-30
+> Last reviewed: 2026-07-12
 
 Complete step-by-step instructions to get this project running locally and deployed online.
 
@@ -9,13 +9,13 @@ Complete step-by-step instructions to get this project running locally and deplo
 ## Step 1 — Install Node.js
 
 1. Go to https://nodejs.org
-2. Download the **LTS** version (the one that says "Recommended For Most Users")
+2. Download Node.js **24**
 3. Run the installer, accept all defaults
 4. Open a terminal (CMD or PowerShell) and verify:
    ```
    node --version
    ```
-   Should print something like `v20.x.x`. If it does, you're good.
+   It must print `v24.x.x`. Also run `npm --version`; it must print `11.x`.
 
 ---
 
@@ -48,7 +48,7 @@ This creates all the tables, rules, indexes, and post-launch hardening in your S
 3. Open the file `supabase/schema.sql` from this project
 4. Copy all the contents and paste it into the SQL Editor
 5. Click **Run** (or press Ctrl+Enter)
-6. Then run each migration in `supabase/migrations/` in filename order (`001-...` through the latest file)
+6. Then run each timestamped migration in `supabase/migrations/` in filename order (oldest timestamp through the latest file)
 7. You should see "Success. No rows returned" after each file — that means it worked
 
 See `docs/MIGRATION-STEPS.md` for the current migration list and hardening notes.
@@ -103,7 +103,7 @@ The verification documents (screenshots, IDs) are stored here.
 
 Open a terminal in the project folder and run:
 ```bash
-npm install
+npm ci
 ```
 This downloads all the required packages. Takes 1–2 minutes.
 
@@ -151,9 +151,9 @@ After registering your own account through the website, promote it to admin by v
 
 ---
 
-## Step 10 — Deploy to Vercel (free hosting)
+## Step 10 — Deploy to Vercel
 
-Vercel hosts the website online for free.
+Vercel is the canonical production host for `https://tibia.davidluky.com`.
 
 ### First time setup:
 
@@ -178,7 +178,13 @@ Vercel hosts the website online for free.
 
 ### Future updates:
 
-Every time you push to GitHub, Vercel automatically redeploys. No manual steps needed.
+Push the exact reviewed tree to the Vercel-connected production branch. If the
+Git integration is unavailable, run `vercel --prod` from that exact tree with
+an authenticated Vercel CLI. Redeploying an older dashboard build does not
+include unpushed local fixes.
+
+Cloudflare/OpenNext packaging is optional and inactive. Use `npm run package`
+only when deliberately validating that portability path.
 
 ---
 
@@ -186,7 +192,7 @@ Every time you push to GitHub, Vercel automatically redeploys. No manual steps n
 
 | Problem | Fix |
 |---------|-----|
-| `npm install` fails | Make sure Node.js v18+ is installed |
+| `npm ci` fails | Confirm Node.js 24/npm 11 and that `package-lock.json` matches `package.json` |
 | Page loads but shows database error | Check `.env.local` has correct Supabase URL and keys |
 | Login doesn't work locally | Make sure local email confirmation is disabled in Supabase Auth settings (Step 4), or confirm the test email |
 | Production login/admin bootstrap fails | Keep email confirmation enabled and promote only a verified Auth user ID (Step 9) |

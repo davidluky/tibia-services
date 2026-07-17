@@ -6,7 +6,7 @@ import {
   forbidden,
   notFound,
   serverError,
-  checkRateLimit,
+  checkActionRateLimit,
   tooManyRequests,
   parseJsonBody,
 } from '@/lib/api-helpers'
@@ -46,7 +46,17 @@ export async function POST(request: NextRequest) {
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
 
-  const rateLimited = await checkRateLimit(supabase, 'messages', 'sender_id', user.id, 60_000, 10)
+  const { data: actorProfile } = await supabase
+    .from('profiles')
+    .select('id, is_banned')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (!actorProfile || actorProfile.is_banned) {
+    return forbidden('Conta suspensa.')
+  }
+
+  const rateLimited = await checkActionRateLimit(user.id, 'send_message', 60_000, 10)
   if (rateLimited) return tooManyRequests()
 
   const parsed = await parseJsonBody(request)

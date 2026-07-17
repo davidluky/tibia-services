@@ -5,6 +5,10 @@ function escapeHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 }
 
+export function sanitizeEmailSubject(str: string): string {
+  return str.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
 let _resend: Resend | null = null
 function getResend(): Resend | null {
   if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY === 're_your_api_key_here') return null
@@ -92,7 +96,7 @@ export async function sendBookingCreated(opts: {
     await sendEmail('sendBookingCreated', {
       from: FROM,
       to,
-      subject: `Nova reserva de ${escapeHtml(opts.customerName)}`,
+      subject: `Nova reserva de ${sanitizeEmailSubject(opts.customerName)}`,
       html: emailHtml(
         `Nova reserva de ${escapeHtml(opts.customerName)}`,
         `Você recebeu uma nova reserva para <strong>${escapeHtml(opts.serviceType)}</strong>. Acesse para aceitar ou recusar.`,
@@ -116,7 +120,7 @@ export async function sendBookingAccepted(opts: {
     await sendEmail('sendBookingAccepted', {
       from: FROM,
       to,
-      subject: `${escapeHtml(opts.serviceiroName)} aceitou sua reserva`,
+      subject: `${sanitizeEmailSubject(opts.serviceiroName)} aceitou sua reserva`,
       html: emailHtml(
         `${escapeHtml(opts.serviceiroName)} aceitou sua reserva`,
         `Sua reserva de <strong>${escapeHtml(opts.serviceType)}</strong> foi aceita. Acesse para combinar os detalhes e o preço.`,
@@ -140,7 +144,7 @@ export async function sendBookingDeclined(opts: {
     await sendEmail('sendBookingDeclined', {
       from: FROM,
       to,
-      subject: `${escapeHtml(opts.serviceiroName)} recusou sua reserva`,
+      subject: `${sanitizeEmailSubject(opts.serviceiroName)} recusou sua reserva`,
       html: emailHtml(
         `${escapeHtml(opts.serviceiroName)} recusou sua reserva`,
         `Sua reserva de <strong>${escapeHtml(opts.serviceType)}</strong> foi recusada. Você pode buscar outro serviceiro.`,
@@ -163,7 +167,7 @@ export async function sendBookingCompleted(opts: {
     await sendEmail('sendBookingCompleted', {
       from: FROM,
       to,
-      subject: `Reserva concluída — avalie ${escapeHtml(opts.serviceiroName)}`,
+      subject: `Reserva concluída — avalie ${sanitizeEmailSubject(opts.serviceiroName)}`,
       html: emailHtml(
         `Reserva concluída!`,
         `Sua reserva com <strong>${escapeHtml(opts.serviceiroName)}</strong> foi concluída com sucesso! Não esqueça de deixar uma avaliação.`,
@@ -187,7 +191,7 @@ export async function sendBookingCancelled(opts: {
     await sendEmail('sendBookingCancelled', {
       from: FROM,
       to,
-      subject: `Reserva cancelada por ${escapeHtml(opts.cancellerName)}`,
+      subject: `Reserva cancelada por ${sanitizeEmailSubject(opts.cancellerName)}`,
       html: emailHtml(
         `Reserva cancelada`,
         `A reserva de <strong>${escapeHtml(opts.serviceType)}</strong> foi cancelada por <strong>${escapeHtml(opts.cancellerName)}</strong>.`,

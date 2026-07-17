@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useLanguage } from '@/lib/language-context'
 import { GAMEPLAY_TYPES } from '@/lib/constants'
+import { SERVICE_REQUEST_APPLICATIONS_ENABLED } from '@/lib/feature-availability'
 import type { ServiceRequest } from '@/lib/types'
 
 interface ServiceRequestCardProps {
@@ -106,9 +107,15 @@ export function ServiceRequestCard({ request, isServiceiro, isLoggedIn, isMatch 
         {/* CTA */}
         {isServiceiro ? (
           <div className="flex flex-col items-end gap-1">
-            <Button onClick={handleOffer} loading={loading} size="sm">
-              {t('requests_offer_btn')}
-            </Button>
+            {SERVICE_REQUEST_APPLICATIONS_ENABLED ? (
+              <Button onClick={handleOffer} loading={loading} size="sm">
+                {t('requests_offer_btn')}
+              </Button>
+            ) : (
+              <p role="status" className="max-w-52 text-right text-xs text-text-muted">
+                {t('requests_offer_unavailable')}
+              </p>
+            )}
             {error && <p className="text-status-error text-xs">{error}</p>}
           </div>
         ) : !isLoggedIn ? (

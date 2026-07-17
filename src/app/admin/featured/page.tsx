@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdminPage } from '@/lib/admin-auth'
 import { getServerLocale, getServerT } from '@/lib/i18n-server'
 import { type Locale } from '@/lib/i18n'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -19,7 +19,7 @@ function formatDate(iso: string, locale: Locale): string {
 }
 
 export default async function AdminFeaturedPage() {
-  const admin = createAdminClient()
+  const { adminClient: admin } = await requireAdminPage()
   const t = await getServerT()
   const locale = await getServerLocale()
 

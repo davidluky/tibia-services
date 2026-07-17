@@ -58,35 +58,38 @@ export function NewRequestForm() {
 
     const budget_tc = budgetRaw ? snapToTC(parseInt(budgetRaw, 10)) : null
 
-    const res = await fetch('/api/service-requests', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        service_type: serviceType,
-        title: title.trim(),
-        description: description.trim() || null,
-        time_preference: timePreference,
-        preferred_date: timePreference === 'scheduled' ? preferredDate : null,
-        preferred_time: timePreference === 'scheduled' ? preferredTime || null : null,
-        budget_tc,
-      }),
-    })
+    try {
+      const res = await fetch('/api/service-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          service_type: serviceType,
+          title: title.trim(),
+          description: description.trim() || null,
+          time_preference: timePreference,
+          preferred_date: timePreference === 'scheduled' ? preferredDate : null,
+          preferred_time: timePreference === 'scheduled' ? preferredTime || null : null,
+          budget_tc,
+        }),
+      })
 
-    const data = await res.json()
-
-    if (!res.ok) {
-      setLoading(false)
-      if (res.status === 401) {
-        setApiError(t('requests_error_session'))
-      } else if (res.status === 403) {
-        setApiError(t('requests_error_role'))
-      } else {
-        setApiError(t('requests_error_generic'))
+      if (!res.ok) {
+        if (res.status === 401) {
+          setApiError(t('requests_error_session'))
+        } else if (res.status === 403) {
+          setApiError(t('requests_error_role'))
+        } else {
+          setApiError(t('requests_error_generic'))
+        }
+        return
       }
-      return
-    }
 
-    router.push('/servicos')
+      router.push('/servicos')
+    } catch {
+      setApiError(t('requests_error_generic'))
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -101,19 +104,22 @@ export function NewRequestForm() {
 
           {/* API error banner */}
           {apiError && (
-            <div className="bg-status-error/10 border border-status-error/30 rounded-md px-4 py-3">
+            <div role="alert" className="bg-status-error/10 border border-status-error/30 rounded-md px-4 py-3">
               <p className="text-status-error text-sm">{apiError}</p>
             </div>
           )}
 
           {/* Service type */}
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">
+            <label htmlFor="request-service-type" className="block text-sm font-medium text-text-primary mb-1">
               {t('requests_field_type')} *
             </label>
             <select
+              id="request-service-type"
               value={serviceType}
               onChange={e => setServiceType(e.target.value)}
+              aria-invalid={Boolean(errors.serviceType)}
+              aria-describedby={errors.serviceType ? 'request-service-type-error' : undefined}
               className="w-full bg-bg-card border border-border rounded-md px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-gold/50"
             >
               <option value="">—</option>
@@ -122,7 +128,7 @@ export function NewRequestForm() {
               ))}
             </select>
             {errors.serviceType && (
-              <p className="text-status-error text-xs mt-1">{errors.serviceType}</p>
+              <p id="request-service-type-error" className="text-status-error text-xs mt-1">{errors.serviceType}</p>
             )}
           </div>
 
@@ -137,27 +143,30 @@ export function NewRequestForm() {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-text-primary mb-1">
+            <label htmlFor="request-description" className="block text-sm font-medium text-text-primary mb-1">
               {t('requests_field_desc')}
             </label>
             <textarea
+              id="request-description"
               value={description}
               onChange={e => setDescription(e.target.value)}
+              aria-invalid={Boolean(errors.description)}
+              aria-describedby={errors.description ? 'request-description-error request-description-count' : 'request-description-count'}
               rows={4}
               maxLength={500}
               className="w-full bg-bg-card border border-border rounded-md px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-gold/50 resize-none"
             />
             {errors.description && (
-              <p className="text-status-error text-xs mt-1">{errors.description}</p>
+              <p id="request-description-error" className="text-status-error text-xs mt-1">{errors.description}</p>
             )}
-            <p className="text-text-muted text-xs mt-1 text-right">{description.length}/500</p>
+            <p id="request-description-count" className="text-text-muted text-xs mt-1 text-right">{description.length}/500</p>
           </div>
 
           {/* Time preference */}
-          <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">
+          <fieldset>
+            <legend className="block text-sm font-medium text-text-primary mb-2">
               {t('requests_field_time')}
-            </label>
+            </legend>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
@@ -184,20 +193,24 @@ export function NewRequestForm() {
             {timePreference === 'scheduled' && (
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-text-muted mb-1">{t('requests_field_date')}</label>
+                  <label htmlFor="request-preferred-date" className="block text-xs text-text-muted mb-1">{t('requests_field_date')}</label>
                   <input
+                    id="request-preferred-date"
                     type="date"
                     value={preferredDate}
                     onChange={e => setPreferredDate(e.target.value)}
+                    aria-invalid={Boolean(errors.date)}
+                    aria-describedby={errors.date ? 'request-preferred-date-error' : undefined}
                     className="w-full bg-bg-card border border-border rounded-md px-3 py-2 text-text-primary text-sm focus:outline-none focus:border-gold/50"
                   />
                   {errors.date && (
-                    <p className="text-status-error text-xs mt-1">{errors.date}</p>
+                    <p id="request-preferred-date-error" className="text-status-error text-xs mt-1">{errors.date}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs text-text-muted mb-1">{t('requests_field_time_input')}</label>
+                  <label htmlFor="request-preferred-time" className="block text-xs text-text-muted mb-1">{t('requests_field_time_input')}</label>
                   <input
+                    id="request-preferred-time"
                     type="time"
                     value={preferredTime}
                     onChange={e => setPreferredTime(e.target.value)}
@@ -206,7 +219,7 @@ export function NewRequestForm() {
                 </div>
               </div>
             )}
-          </div>
+          </fieldset>
 
           {/* Budget */}
           <Input

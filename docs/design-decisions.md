@@ -41,7 +41,9 @@ The smallest denomination in Tibia is 25 TC. Enforced by `isValidTC()` in `utils
 WhatsApp and Discord are sensitive. Exposing them only after a booking is accepted prevents scraping and spam. The check is server-side (`/api/contact/[id]`) so it cannot be bypassed by the client.
 
 ### Database-enforced marketplace contracts
-User-facing API routes still perform validation for clear errors, but the database owns the high-value invariants: safe booking initial state, booking status transitions, final-state immutability, monotonic participant confirmations, review-to-booking integrity, featured-listing activation, serviceiro verification fields, atomic action rate limits, and atomic dispute transitions. This prevents authenticated users from bypassing business rules through the public Supabase client.
+User-facing API routes still perform validation for clear errors, but the database owns the high-value invariants: safe booking initial state, booking status transitions, final-state immutability, monotonic participant confirmations, banned-user mutation guards, review-to-booking integrity, featured-listing activation, paid transactional verification review, atomic action rate limits, and atomic dispute transitions. This prevents authenticated users from bypassing business rules through the public Supabase client.
+
+Service-role reads in Server Components must call `requireAdminPage()` in the page or leaf data access that performs the query. The admin layout may redirect for navigation convenience, but it is not the authorization boundary because App Router layouts can be reused across client navigation.
 
 ---
 

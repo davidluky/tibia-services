@@ -24,8 +24,8 @@ Do not use `-ApproveProduction` until all of these are complete:
 
 1. Review and commit the active security, admin, email, and migration batch.
    The release script intentionally refuses a dirty checkout.
-2. Apply and verify the canonical Supabase schema and numbered migrations
-   through `010` against the production project.
+2. Apply and verify the canonical Supabase schema and timestamped migrations
+   through `20260712001000_audit-security-hardening.sql` against the production project.
 3. Confirm all seven production environment variables are present in the
    linked Vercel project without printing their values.
 4. Complete the documented Supabase, Resend, and email-domain setup and the

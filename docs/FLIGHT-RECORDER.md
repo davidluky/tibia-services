@@ -2,12 +2,83 @@
 
 This file captures root-cause bug classes, the guard installed, and what should prevent regression.
 
+## 2026-07-16 - Provider Grants Survived A PUBLIC Revoke
+
+- **Class:** Supabase API roles retained direct execution of server-only
+  `SECURITY DEFINER` functions even though an earlier migration revoked the
+  PostgreSQL `PUBLIC` grant.
+- **Impact:** Untrusted clients could call rate-limit and dispute-transition
+  functions with caller-supplied identities.
+- **Root cause:** Provider-managed role grants can exist independently of the
+  inherited `PUBLIC` privilege.
+- **Guard installed:** Migration 011 explicitly revokes `PUBLIC`, `anon`, and
+  `authenticated`, restores only `service_role`, converts the safe profile view
+  to security-invoker, pins trigger search paths, and removes duplicate legacy
+  policies.
+- **Regression prevention:** Probe `has_function_privilege()` with the real
+  hosted roles after every definer-function migration and rerun both database
+  lint and the Security Advisor.
+
+## 2026-07-16 - Security Capability Was Plan-Gated
+
+- **Class:** A provider advisor recommendation was not available on the active
+  Free plan.
+- **Impact:** Leaked-password screening cannot be enabled without a billing
+  change.
+- **Guard installed:** The provider minimum password length now matches the
+  app's eight-character validation, and the paid-only residual warning is
+  recorded instead of being reported as fixed.
+- **Regression prevention:** Separate code/database defects from plan-gated
+  controls during release review; never silently upgrade billing or claim a
+  provider control is active without dashboard evidence.
+
+## 2026-07-12 - Table Grant Overrode Contact Column Revocation
+
+- **Class:** A column-level revoke attempted to hide contact fields while the public roles still had table-level `SELECT`.
+- **Impact:** Direct Supabase clients could potentially select WhatsApp/Discord without the booking-gated API.
+- **Root cause:** PostgreSQL privileges are additive; removing a narrow column privilege does not override a broader table grant.
+- **Guard installed:** Migration 010 revokes table-wide profile reads and grants only explicit safe columns; own contact remains behind `my_contact_info()`.
+- **Regression prevention:** Test privileges with real `anon`/`authenticated` database roles, not only SQL substring tests.
+
+## 2026-07-12 - Layout-Only Admin Authorization
+
+- **Class:** Sensitive Server Components created service-role clients while authorization lived only in a parent layout.
+- **Impact:** App Router partial rendering/reused layouts made the authorization check too far from the privileged data source.
+- **Root cause:** The layout was treated as a security boundary rather than a navigation guard.
+- **Guard installed:** Every admin page calls `requireAdminPage()` before creating or using a service-role client; the helper rejects banned/non-admin users.
+- **Regression prevention:** Authorize at each privileged page, route, server action, or data-access function.
+
+## 2026-07-12 - Verification Privacy And Split Review Writes
+
+- **Class:** Partial uploads and failed inserts orphaned government-ID objects; approval changed request/profile rows separately.
+- **Impact:** Sensitive files could persist without a valid request and approval could become approved-but-unregistered.
+- **Root cause:** Storage compensation and cross-table review transaction were missing.
+- **Guard installed:** Upload magic-byte validation plus compensating deletion; migration 010 partial uniqueness and locked review RPC; post-review private-object deletion.
+- **Regression prevention:** Every multi-resource workflow needs failure cleanup, transaction boundaries where available, and retry-visible errors.
+
+## 2026-07-12 - Raceable Write Limits And Ban Gaps
+
+- **Class:** Booking/message/request throttles counted rows before inserting, and banned participants retained mutation paths.
+- **Impact:** Parallel requests could exceed limits; a suspended account could continue changing bookings or sending messages.
+- **Root cause:** Atomic action RPC existed but was not used by all writes; RLS/trigger rules did not include current ban state.
+- **Guard installed:** All protected write routes use the atomic ledger; migration 010 adds banned-user policies/triggers and APIs fail early with 403.
+- **Regression prevention:** Abuse and suspension controls must be enforced at both API and database boundaries under concurrency.
+
+## 2026-07-16 - Contained Service-Request Offer Model
+
+- **Class:** A serviceiro application is represented as a normal customer-created pending booking.
+- **Impact:** The applicant can accept their own unsolicited offer and repeated applications can create duplicate bookings.
+- **Root cause:** The schema has no application/source identity or customer acceptance state.
+- **Guard installed:** A centralized hard-off availability flag now makes the apply API return a stable 503 before auth or database access, and the serviceiro UI renders an unavailable notice instead of an actionable Apply control.
+- **Decision still required:** Choose multi-applicant customer selection or first-match behavior, then implement the transactional schema/API/UI migration with explicit customer acceptance.
+- **Regression prevention:** Tests prove the hold cannot reach booking creation and the UI has no enabled apply action. Do not re-enable or advertise the flow until customer-controlled acceptance and duplicate/concurrency tests exist.
+
 ## 2026-04-30 - Direct Supabase Bypass Of API Contracts
 
 - **Class:** Public clients could bypass API validation by writing directly to Supabase tables.
 - **Impact:** Forged bookings, review integrity gaps, self-activated featured listings, and serviceiro profile abuse.
 - **Root cause:** Business invariants lived mostly in Next.js route handlers while RLS policies allowed broad direct writes.
-- **Guard installed:** `supabase/migrations/009-contract-hardening.sql` adds RLS tightening, contract triggers, protected fields, atomic dispute RPCs, and a static migration invariant test in `src/__tests__/migration-contracts.test.ts`.
+- **Guard installed:** `supabase/migrations/20260430000900_contract-hardening.sql` adds RLS tightening, contract triggers, protected fields, atomic dispute RPCs, and a static migration invariant test in `src/__tests__/migration-contracts.test.ts`.
 - **Regression prevention:** Keep marketplace state invariants in database policies, triggers, constraints, or RPCs before exposing any public client write path.
 
 ## 2026-04-30 - Non-Atomic Dispute State Changes
@@ -46,8 +117,8 @@ This file captures root-cause bug classes, the guard installed, and what should 
 
 - **Class:** Fresh setup docs could point deployers at an incomplete or unsafe database state.
 - **Impact:** New environments could miss security migrations even when the source code was fixed.
-- **Root cause:** `schema.sql` and numbered migrations were not described as one canonical sequence everywhere.
-- **Guard installed:** Setup, migration, deployment, technical, and build docs were updated to state that canonical DB state is `schema.sql` plus migrations `001` through `009`.
+- **Root cause:** `schema.sql` and timestamped migrations were not described as one canonical sequence everywhere.
+- **Guard installed:** Setup, migration, deployment, technical, and build docs were updated to state that canonical DB state is `schema.sql` plus every migration in timestamp order.
 - **Regression prevention:** Every migration must update setup/deploy docs in the same batch.
 
 ## 2026-05-02 - Partial Booking Contract Enforcement
@@ -55,7 +126,7 @@ This file captures root-cause bug classes, the guard installed, and what should 
 - **Class:** Broad participant booking updates still allowed direct clients to mutate non-status fields outside the intended workflow.
 - **Impact:** A participant could change service type, mutate price after completion, or unset their own confirmations after the API would no longer expose that action.
 - **Root cause:** The database trigger enforced ownership of some booleans and status transitions, but did not model final-state immutability, monotonic confirmations, or unrelated-field checks on transitions.
-- **Guard installed:** Migration `009-contract-hardening.sql` now keeps service type/creation time immutable, restricts price changes to active bookings, makes final states immutable to public clients, makes confirmation flags monotonic, and blocks status transitions that include unrelated field changes. Static migration tests assert these guards.
+- **Guard installed:** Migration `20260430000900_contract-hardening.sql` now keeps service type/creation time immutable, restricts price changes to active bookings, makes final states immutable to public clients, makes confirmation flags monotonic, and blocks status transitions that include unrelated field changes. Static migration tests assert these guards.
 - **Regression prevention:** When adding a booking field or action, update the trigger and migration-contract test first, then expose the route/UI action.
 
 ## 2026-05-02 - Admin Bypass Without Revalidation
@@ -71,7 +142,7 @@ This file captures root-cause bug classes, the guard installed, and what should 
 - **Class:** The action rate-limit helper used count-then-insert in application code and ignored persistence errors.
 - **Impact:** Concurrent verification requests could pass the limit, and database/RPC failures silently disabled throttling.
 - **Root cause:** Rate limiting was not one transactional database operation and did not fail closed at the API boundary.
-- **Guard installed:** Migration `009-contract-hardening.sql` adds `check_api_action_rate_limit()` with a transaction advisory lock; `checkActionRateLimit()` now calls that RPC and treats any error as limited.
+- **Guard installed:** Migration `20260430000900_contract-hardening.sql` adds `check_api_action_rate_limit()` with a transaction advisory lock; `checkActionRateLimit()` now calls that RPC and treats any error as limited.
 - **Regression prevention:** Abuse controls must be atomic at the persistence boundary and fail closed unless the route is explicitly non-security-sensitive.
 
 ## 2026-05-02 - CI-Only Jest Config Loader Failure

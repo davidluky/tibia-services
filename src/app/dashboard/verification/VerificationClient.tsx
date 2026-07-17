@@ -95,20 +95,24 @@ export function VerificationClient({ userId, existing }: VerificationClientProps
     formData.append('screenshot', screenshot)
     formData.append('id_document', idDocument)
 
-    const res = await fetch('/api/verification', {
-      method: 'POST',
-      body: formData,
-    })
+    try {
+      const res = await fetch('/api/verification', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json().catch(() => null) as { error?: unknown } | null
 
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error ?? t('verification_error_send'))
+      if (!res.ok) {
+        setError(typeof data?.error === 'string' ? data.error : t('verification_error_send'))
+        return
+      }
+
+      setSubmitted(true)
+    } catch {
+      setError(t('verification_error_send'))
+    } finally {
       setLoading(false)
-      return
     }
-
-    setSubmitted(true)
-    setLoading(false)
   }
 
   return (
@@ -130,38 +134,47 @@ export function VerificationClient({ userId, existing }: VerificationClientProps
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
+          id="verification-character-name"
           label={t('verification_char_label')}
           value={characterName}
           onChange={e => setCharacterName(e.target.value)}
           placeholder={t('verification_char_placeholder')}
+          aria-invalid={Boolean(error && !characterName.trim())}
+          aria-describedby={error ? 'verification-form-error' : undefined}
           required
         />
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-text-muted">{t('verification_screenshot_label')}</label>
+          <label htmlFor="verification-screenshot" className="text-sm text-text-muted">{t('verification_screenshot_label')}</label>
           <input
+            id="verification-screenshot"
             type="file"
             accept="image/*"
             onChange={e => setScreenshot(e.target.files?.[0] ?? null)}
+            aria-invalid={Boolean(error && !screenshot)}
+            aria-describedby={error ? 'verification-form-error' : undefined}
             required
             className="text-sm text-text-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-bg-card file:text-text-primary file:text-sm cursor-pointer"
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-text-muted">{t('verification_id_label')}</label>
+          <label htmlFor="verification-id-document" className="text-sm text-text-muted">{t('verification_id_label')}</label>
           <input
+            id="verification-id-document"
             type="file"
             accept="image/*"
             onChange={e => setIdDocument(e.target.files?.[0] ?? null)}
+            aria-invalid={Boolean(error && !idDocument)}
+            aria-describedby={`verification-id-note${error ? ' verification-form-error' : ''}`}
             required
             className="text-sm text-text-muted file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border file:border-border file:bg-bg-card file:text-text-primary file:text-sm cursor-pointer"
           />
-          <p className="text-xs text-text-muted">{t('verification_id_note')}</p>
+          <p id="verification-id-note" className="text-xs text-text-muted">{t('verification_id_note')}</p>
         </div>
 
         {error && (
-          <p className="text-status-error text-sm bg-status-error/10 border border-status-error/20 rounded-md px-3 py-2">
+          <p id="verification-form-error" role="alert" className="text-status-error text-sm bg-status-error/10 border border-status-error/20 rounded-md px-3 py-2">
             {error}
           </p>
         )}

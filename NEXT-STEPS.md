@@ -1,15 +1,16 @@
 # Next Steps — What You Need To Do
 
-The code is 100% ready. You just need to set up the external services.
+This checklist is for a fresh environment. The canonical production site is
+already hosted at `https://tibia.davidluky.com` on Vercel.
 
 ---
 
 ## Step 1 — Install Node.js (if not done yet)
 
 1. Go to https://nodejs.org
-2. Download the **LTS** version
+2. Download Node.js **24**
 3. Run the installer, accept all defaults
-4. Open a terminal and verify: `node --version` → should show v18 or higher
+4. Verify `node --version` shows `v24.x` and `npm --version` shows `11.x`
 
 ---
 
@@ -56,7 +57,7 @@ The code is 100% ready. You just need to set up the external services.
 2. Open the file `supabase/schema.sql` from the project folder
 3. Copy all the contents and paste into the SQL Editor
 4. Click **Run** — you should see "Success"
-5. Run every numbered file in `supabase/migrations/` in order, from `001-...` through the latest file
+5. Run every timestamped file in `supabase/migrations/` in filename order, from the oldest timestamp through the latest file
 
 ---
 
@@ -83,7 +84,7 @@ The code is 100% ready. You just need to set up the external services.
 Open a terminal in the project folder and run:
 
 ```
-npm install
+npm ci
 npm run dev
 ```
 
@@ -110,13 +111,16 @@ Then open your browser at: **http://localhost:3000**
 
 ---
 
-## Step 10 — Deploy online (optional)
+## Step 10 — Deploy to the canonical Vercel project (optional)
 
-1. Create a free account at https://vercel.com
-2. Push the project to GitHub
-3. In Vercel → **Add New Project** → import your repo
-4. Add all 7 environment variables from `.env.local.example`
-5. Click Deploy → your site will be live at a `.vercel.app` URL
+1. Run `npm run quality` against the exact tree to deploy.
+2. Push it to the Vercel-connected production branch, or run `vercel --prod`
+   from that exact tree with an authenticated Vercel CLI.
+3. Confirm all 7 environment variables from `.env.local.example` are set.
+4. Verify `https://tibia.davidluky.com` after deployment.
+
+Cloudflare/OpenNext packaging is optional and inactive; it is not the current
+production route.
 
 ---
 
@@ -124,10 +128,10 @@ Then open your browser at: **http://localhost:3000**
 
 | Command | What it does |
 |---------|-------------|
-| `npm install` | Install dependencies (run once) |
+| `npm ci` | Reproduce dependencies from `package-lock.json` |
 | `npm run dev` | Start local development server |
 | `npm run build` | Check for errors / build for production |
-| `npm run package` | Build Cloudflare Workers artifact |
+| `npm run package` | Optional Cloudflare Workers portability build |
 | `npm run quality` | Run lint, typecheck, tests, build, and audit |
 
 ## Need help?

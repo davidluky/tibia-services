@@ -72,28 +72,34 @@ export default function RegisterClient() {
 
         <form onSubmit={handleRegister} className="flex flex-col gap-4">
           {/* Role selection */}
-          <div className="flex flex-col gap-2">
-            <label className="text-sm text-text-muted">{t('register_role_label')}</label>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="text-sm text-text-muted">{t('register_role_label')}</legend>
             <div className="grid grid-cols-2 gap-3">
               {ROLE_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setRole(opt.value as 'customer' | 'serviceiro')}
-                  className={`
-                    p-3 rounded-lg border text-left transition-all
+                <label key={opt.value} className="block cursor-pointer">
+                  <input
+                    type="radio"
+                    name="role"
+                    value={opt.value}
+                    checked={role === opt.value}
+                    onChange={() => setRole(opt.value as 'customer' | 'serviceiro')}
+                    className="peer sr-only"
+                  />
+                  <span className={`
+                    block p-3 rounded-lg border text-left transition-all
+                    peer-focus-visible:outline-none peer-focus-visible:ring-2 peer-focus-visible:ring-gold peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-bg-card
                     ${role === opt.value
                       ? 'border-gold bg-gold/10 text-text-primary'
                       : 'border-border text-text-muted hover:border-gold/50'
                     }
-                  `}
-                >
-                  <div className="font-medium text-sm">{opt.title}</div>
-                  <div className="text-xs mt-1 opacity-70">{opt.description}</div>
-                </button>
+                  `}>
+                    <span className="block font-medium text-sm">{opt.title}</span>
+                    <span className="block text-xs mt-1 opacity-70">{opt.description}</span>
+                  </span>
+                </label>
               ))}
             </div>
-          </div>
+          </fieldset>
 
           <Input
             label={t('register_name_label')}
@@ -120,7 +126,7 @@ export default function RegisterClient() {
           />
 
           {error && (
-            <p className="text-status-error text-sm bg-status-error/10 border border-status-error/20 rounded-md px-3 py-2">
+            <p role="alert" className="text-status-error text-sm bg-status-error/10 border border-status-error/20 rounded-md px-3 py-2">
               {error}
             </p>
           )}

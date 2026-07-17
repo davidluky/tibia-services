@@ -1,3 +1,47 @@
+# Retro - 2026-07-12 Portfolio Audit
+
+## Outcome
+
+The audit converted several convention-only safeguards into enforced local
+contracts: profile contact grants, banned-user writes, atomic throttling,
+verification review, private upload cleanup, and admin page authorization.
+It also aligned the runtime/dependencies and strengthened frontend failure and
+accessibility behavior. The follow-up applied and role-tested all 11 migrations,
+configured verified Resend/Supabase SMTP and Vercel production variables, and
+reduced the live Security Advisor to zero errors plus two explicit residual
+warnings. Application deployment and hosted smoke remain the final release
+proof.
+
+## Lessons
+
+- PostgreSQL grants are additive; RLS and a narrow revoke do not compensate for
+  a broader table privilege. Test the real database role, not just SQL text.
+- App Router layouts are useful navigation guards but authorization belongs at
+  each privileged data access.
+- Awaiting an email provider solves abandoned serverless work, not durable
+  delivery. Durable guarantees require an outbox, idempotency, and retry owner.
+- Upload workflows crossing storage and SQL need compensation on every partial
+  failure and a defined retention/deletion point.
+- A feature named "apply" needs an explicit domain state. Reusing a booking
+  state whose acceptance belongs to the applicant creates a product/security
+  contradiction that tests cannot paper over.
+- Revoking `PUBLIC` is not proof that provider-managed API roles lost an
+  explicit grant. Hosted role probes and provider advisors are part of the
+  migration contract for `SECURITY DEFINER` functions.
+- Plan-gated controls must be reported as residual risk, not silently upgraded
+  or marked complete. Strengthen the controls available on the current plan and
+  preserve the exact billing-dependent follow-up.
+
+## Follow-up order
+
+1. Push the verified release and complete Vercel hosted smoke checks.
+2. Choose and implement the service-request application/customer-selection model.
+3. Add transactional delivery outbox/retry processing.
+4. Add DB behavior integration tests, generated Supabase types, and pagination/aggregates.
+5. Revisit leaked-password screening only with an explicit Supabase plan decision.
+
+---
+
 # Retro - 2026-04-30 Full Mode Hardening
 
 ## Outcome
@@ -17,7 +61,7 @@ The session moved the project from "API-validated happy path" toward contract-en
 ## What Was Risky
 
 - The hardening batch is broad and still uncommitted, so review should happen before deployment.
-- The Supabase migration is not applied externally from this workspace yet. Production safety depends on applying `schema.sql` plus migrations `001` through `009` in order.
+- The Supabase migrations are not applied externally from this workspace yet. Production safety depends on applying `schema.sql` plus every timestamped migration in filename order.
 - No live Supabase E2E run was performed against a real hosted project in this session.
 - Cloudflare OpenNext packaging passes locally but warns that Windows is not its preferred runtime; use WSL/Linux for deployment confidence if Windows-specific runtime issues appear.
 - Generated Supabase `Database` types remain a worthwhile next structural improvement to prevent schema/type drift.

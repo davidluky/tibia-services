@@ -45,7 +45,7 @@ Core marketplace functionality:
 - Comment-based proof flow (user places code in Tibia.com character comment)
 - Character name validation (letters + spaces, max 30 chars)
 - Self-verification prevention
-- Migration: `001-character-verification.sql` (added `tibia_character`, `tibia_char_verified` to serviceiro_profiles)
+- Migration: `20260316000100_character-verification.sql` (added `tibia_character`, `tibia_char_verified` to serviceiro_profiles)
 
 ## Subproject D: Dispute System
 
@@ -53,7 +53,7 @@ Core marketplace functionality:
 - Admin resolves disputes (refund/release/split options)
 - Dispute status flow: open → resolved
 - Admin dispute management page
-- Migration: `002-disputes.sql`
+- Migration: `20260316000200_disputes.sql`
 
 ## Subproject E: Availability Summary
 
@@ -68,14 +68,14 @@ Core marketplace functionality:
 - Featured serviceiros highlighted on landing page
 - FeaturedListingCard component for serviceiro dashboard
 - Admin featured listing confirmation page
-- Migration: `003-featured-listings.sql`
+- Migration: `20260316000300_featured-listings.sql`
 
 ## Service Requests
 
 - Customer-posted service request board
 - Serviceiros can browse and apply to requests
 - Filters by service type
-- Migration: `004-service-requests.sql`
+- Migration: `20260316000400_service-requests.sql`
 
 ## Notifications System
 
@@ -83,11 +83,11 @@ Core marketplace functionality:
 - 30-second polling for new notifications
 - Mark as read functionality
 - Notifications for booking events
-- Migration: `005-notifications.sql`
+- Migration: `20260329000500_notifications.sql`
 
 ## Pre-Launch Hardening
 
-- Security audit and hardening (migration: `006-security-hardening.sql`)
+- Security audit and hardening (migration: `20260329000600_security-hardening.sql`)
 - Rate limiting on write endpoints (bookings, messages, service requests)
 - Standardized API helpers (`api-helpers.ts`)
 - Input sanitization (`sanitizeText` for XSS prevention)
@@ -99,14 +99,14 @@ Core marketplace functionality:
 
 ## Contact Column Lockdown
 
-- Database-layer enforcement of contact info visibility (migration: `007-contact-column-lockdown.sql`)
+- Database-layer enforcement of contact info visibility (migration: `20260412000700_contact-column-lockdown.sql`)
 - Revoked column-level SELECT on `whatsapp`/`discord` for anon + authenticated roles
 - Added `my_contact_info()` SECURITY DEFINER function for dashboard self-read
 - `/api/contact/[id]` endpoint (uses service_role) continues to work as intended
 
 ## Booking Field Lockdown
 
-- BEFORE UPDATE trigger on bookings table (migration: `008-booking-field-lockdown.sql`)
+- BEFORE UPDATE trigger on bookings table (migration: `20260412000800_booking-field-lockdown.sql`)
 - Participant ID immutability (`customer_id`, `serviceiro_id` cannot change after INSERT)
 - Ownership-scoped confirmation flags (each party can only toggle their own booleans)
 - Automatic price confirmation reset on renegotiation
@@ -114,7 +114,7 @@ Core marketplace functionality:
 
 ## Contract Hardening
 
-- Database-layer contract enforcement (migration: `009-contract-hardening.sql`)
+- Database-layer contract enforcement (migration: `20260430000900_contract-hardening.sql`)
 - Serviceiro profile policies require serviceiro role and non-banned profile
 - Registration and character verification fields are protected from self-modification
 - Booking INSERT/UPDATE trigger enforces initial state, self-booking prevention, service type validity/immutability, TC bounds, participant immutability, owned monotonic confirmation flags, price confirmation resets, final-state immutability, and status/`completed_at` transitions
@@ -145,15 +145,25 @@ Core marketplace functionality:
 
 ## Deployment Documentation Audit
 
-- Setup and deployment docs now define the canonical database state as `supabase/schema.sql` plus all numbered migrations
+- Setup and deployment docs now define the canonical database state as `supabase/schema.sql` plus all timestamped migrations
 - Setup and deployment docs list all 7 required environment variables
 - Production admin bootstrap docs require a confirmed Supabase Auth user ID
 - Test documentation avoids hard-coded totals; run `npm test` for the current count
 - Migration 009 is included in the canonical migration list
+
+## 2026-07-12 — Portfolio audit hardening
+
+- Added migration `20260712001000_audit-security-hardening.sql` for explicit safe profile grants, banned-user booking/message guards, one-active-verification enforcement, and transactional paid verification review.
+- Replaced raceable count-before-insert throttles with the existing atomic action-rate RPC for booking, message, and service-request creation.
+- Added identity-file signature validation plus cleanup on partial upload, failed row insert, and completed review.
+- Authorized every admin service-role page query at the data-access point instead of relying only on a parent layout, and rejected banned administrators in the shared API guard.
+- Added resilient form/network/error states, accessible labels and role selection, customer-only booking controls, and notification rollback/retry behavior.
+- Pinned Node 24/npm 11, applied supported patch/minor dependency upgrades, and documented Vercel as the canonical production host.
+- Local verification: 15 Jest suites / 100 tests, lint, typecheck, Next production build, dependency audit, and optional OpenNext package build pass.
 
 ## Current State
 
 Feature-complete marketplace ready for deployment. All core flows working:
 - Auth, browsing, booking, chat, reviews, verification, disputes, featured listings, service requests, notifications, analytics, admin panel.
 - 3-language i18n (including admin panel), email notifications, rate limiting, RLS security.
-- Canonical database state is `supabase/schema.sql` plus 9 incremental migrations (001-009) hardening schema beyond initial RLS policies.
+- Canonical database state is `supabase/schema.sql` plus ten timestamped incremental migrations hardening schema beyond initial RLS policies.

@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdminPage } from '@/lib/admin-auth'
 import { getServerT } from '@/lib/i18n-server'
 
 export default async function AdminPage() {
-  const admin = createAdminClient()
+  const { adminClient: admin } = await requireAdminPage()
   const t = await getServerT()
 
   const [

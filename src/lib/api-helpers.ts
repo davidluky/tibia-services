@@ -86,7 +86,7 @@ export async function getAuthUserWithProfile() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('*')
+    .select('id, role, display_name, bio, is_banned, created_at')
     .eq('id', user.id)
     .single()
 
@@ -99,11 +99,11 @@ export async function requireAdmin() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, is_banned')
     .eq('id', user.id)
     .single()
 
-  if (!profile || profile.role !== 'admin') {
+  if (!profile || profile.role !== 'admin' || profile.is_banned) {
     return { authorized: false as const }
   }
 
@@ -112,25 +112,6 @@ export async function requireAdmin() {
 }
 
 // ─── Rate limiting ────────────────────────────────────────────────────────────
-
-export async function checkRateLimit(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  table: string,
-  userIdColumn: string,
-  userId: string,
-  windowMs: number,
-  maxRequests: number,
-  timestampColumn = 'created_at',
-): Promise<boolean> {
-  const since = new Date(Date.now() - windowMs).toISOString()
-  const { count } = await supabase
-    .from(table)
-    .select('*', { count: 'exact', head: true })
-    .eq(userIdColumn, userId)
-    .gt(timestampColumn, since)
-
-  return (count ?? 0) >= maxRequests
-}
 
 export async function checkActionRateLimit(
   userId: string,

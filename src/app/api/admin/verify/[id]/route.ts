@@ -3,6 +3,7 @@ import {
   requireAdmin,
   unauthorized,
   badRequest,
+  apiError,
   notFound,
   serverError,
   parseJsonBody,
@@ -28,51 +29,64 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
     ? sanitizeText(admin_notes)
     : null
 
-  // Fetch the request
+  if (action !== 'approve' && action !== 'reject' && action !== 'fee_paid') {
+    return badRequest('Ação inválida.')
+  }
+  if (action === 'approve' && fee_paid !== true) {
+    return badRequest('Confirme o pagamento da taxa antes de aprovar.')
+  }
+
+  // Capture the private object paths before review. The database review is
+  // committed first; object deletion is intentionally best-effort afterwards.
   const { data: req } = await auth.adminClient
     .from('verification_requests')
-    .select('serviceiro_id')
+    .select('serviceiro_id, screenshot_url, id_document_url')
     .eq('id', params.id)
     .single()
 
   if (!req) return notFound('Solicitação não encontrada.')
 
-  if (action === 'approve') {
-    // Update verification request
-    const { error: verifyError } = await auth.adminClient.from('verification_requests').update({
-      status: 'approved',
-      admin_notes: sanitizedAdminNotes,
-      fee_paid: fee_paid ?? false,
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: auth.user.id,
-    }).eq('id', params.id)
-    if (verifyError) return serverError()
+  if (action === 'approve' || action === 'reject') {
+    const { error: reviewError } = await auth.adminClient.rpc('review_verification_request', {
+      p_request_id: params.id,
+      p_reviewed_by: auth.user.id,
+      p_action: action,
+      p_admin_notes: sanitizedAdminNotes,
+      p_fee_paid: fee_paid ?? false,
+    })
 
-    // Set is_registered on serviceiro profile
-    const { error: profileError } = await auth.adminClient.from('serviceiro_profiles').update({
-      is_registered: true,
-      registered_at: new Date().toISOString(),
-    }).eq('id', req.serviceiro_id)
-    if (profileError) return serverError()
+    if (reviewError) {
+      if (reviewError.message.includes('verification_not_pending')) {
+        return apiError('Solicitação já revisada.', 409)
+      }
+      if (reviewError.message.includes('verification_request_not_found')) {
+        return notFound('Solicitação não encontrada.')
+      }
+      if (reviewError.message.includes('reviewer_not_admin')) {
+        return apiError('Administrador sem permissão para revisar.', 403)
+      }
+      if (reviewError.message.includes('verification_fee_not_paid')) {
+        return badRequest('Confirme o pagamento da taxa antes de aprovar.')
+      }
+      console.error('[verification-review] Transaction failed:', reviewError)
+      return serverError()
+    }
 
-  } else if (action === 'reject') {
-    const { error: rejectError } = await auth.adminClient.from('verification_requests').update({
-      status: 'rejected',
-      admin_notes: sanitizedAdminNotes,
-      fee_paid: fee_paid ?? false,
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: auth.user.id,
-    }).eq('id', params.id)
-    if (rejectError) return serverError()
-
-  } else if (action === 'fee_paid') {
+    const privatePaths = [req.screenshot_url, req.id_document_url]
+      .filter((path): path is string => typeof path === 'string' && path.length > 0)
+    if (privatePaths.length > 0) {
+      const { error: cleanupError } = await auth.adminClient.storage
+        .from('verifications')
+        .remove(privatePaths)
+      if (cleanupError) {
+        console.error('[verification-review] Failed to remove reviewed private files:', cleanupError)
+      }
+    }
+  } else {
     const { error: feeError } = await auth.adminClient.from('verification_requests').update({
       fee_paid: true,
     }).eq('id', params.id)
     if (feeError) return serverError()
-
-  } else {
-    return badRequest('Ação inválida.')
   }
 
   return NextResponse.json({ success: true })

@@ -9,7 +9,7 @@ import {
   notFound,
   tooManyRequests,
   serverError,
-  checkRateLimit,
+  checkActionRateLimit,
   parseJsonBody,
 } from '@/lib/api-helpers'
 
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Rate limit: max 3 booking requests per minute per user
-  const rateLimited = await checkRateLimit(supabase, 'bookings', 'customer_id', user.id, 60_000, 3)
+  const rateLimited = await checkActionRateLimit(user.id, 'create_booking', 60_000, 3)
   if (rateLimited) {
     return tooManyRequests('Muitas solicitações. Aguarde um momento antes de tentar novamente.')
   }
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     return serverError('Erro ao criar reserva.')
   }
 
-  void sendBookingCreated({
+  await sendBookingCreated({
     bookingId: booking.id,
     serviceiroId: serviceiro_id,
     customerName: profile.display_name ?? 'Cliente',

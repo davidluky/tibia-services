@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { GAMEPLAY_TYPES } from '@/lib/constants'
+import {
+  SERVICE_REQUEST_APPLICATIONS_ENABLED,
+  SERVICE_REQUEST_APPLICATIONS_UNAVAILABLE_ERROR,
+} from '@/lib/feature-availability'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
   getAuthUser,
@@ -12,6 +16,13 @@ import {
 } from '@/lib/api-helpers'
 
 export async function POST(_req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  if (!SERVICE_REQUEST_APPLICATIONS_ENABLED) {
+    return NextResponse.json(
+      { error: SERVICE_REQUEST_APPLICATIONS_UNAVAILABLE_ERROR },
+      { status: 503 },
+    )
+  }
+
   const params = await props.params;
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()

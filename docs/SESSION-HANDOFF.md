@@ -1,3 +1,136 @@
+# Session Handoff - 2026-07-12 Portfolio Audit
+
+## 2026-07-16 live provider completion update
+
+This supersedes the earlier owner-gated provider and migration steps below.
+
+- Supabase migration history is aligned through
+  `20260716001100_advisor-security-hardening.sql`; local and remote report the
+  same 11 versions.
+- The linked production database reports no schema lint errors. A live
+  privilege probe confirmed the public view is security-invoker, all
+  server-only definer RPCs reject `anon` and `authenticated`, their
+  `service_role` grants remain, the self-contact RPC keeps only its intended
+  authenticated grant, the four trigger search paths are pinned, and the three
+  duplicate legacy request policies are gone.
+- The Security Advisor reports zero errors. Its two remaining warnings are
+  deliberate: `my_contact_info()` is caller-scoped and must remain available to
+  the signed-in dashboard, while leaked-password screening requires a paid
+  Supabase plan. The provider minimum password length was raised from 6 to 8 to
+  match the app's existing validation.
+- `tibia.davidluky.com` is verified in Resend, the production sending key and
+  sender/base URL are stored in Vercel, and Supabase Auth uses the verified
+  custom SMTP sender. A provider-side test message was confirmed delivered.
+- The temporary Supabase migration token was revoked after use and its local
+  handoff file was deleted.
+- The remaining release step is to commit and push this reviewed tree, monitor
+  the Vercel production build, and run unauthenticated hosted smoke checks. The
+  service-request application action intentionally remains fail-closed.
+
+## 2026-07-16 application-flow containment update
+
+The unsafe service-request application path is now fail-closed in both the API
+and UI. The first-match-versus-multi-applicant product decision remains open,
+so the hold must stay in place until the selected customer-acceptance model is
+implemented transactionally and covered for duplicate/concurrent attempts.
+
+## Outcome
+
+The local application is materially safer and fully green, but this project is
+not production-complete until migrations 009-010 and the owner-gated Resend/
+Vercel setup are applied and verified. No deployment, Supabase mutation, email,
+account change, or secret entry occurred in this audit.
+
+## Implemented locally
+
+- Preserved and extended the existing booking-email handoff bundle; serverless
+  handlers await the current best-effort email helpers.
+- Added migration `20260712001000_audit-security-hardening.sql`:
+  - replaces broad profile table privileges with explicit safe columns;
+  - blocks banned booking/message mutations in API and database layers;
+  - prevents concurrent pending/approved verification requests;
+  - makes paid admin verification approve/reject transactional and replay-safe.
+- Moved booking, message, and service-request creation to the atomic action-rate
+  RPC instead of raceable count-before-insert checks.
+- Validated identity upload magic bytes and removed orphaned private objects on
+  partial upload or failed row creation; reviewed IDs are removed after commit.
+- Added `requireAdminPage()` at each admin service-role page query, kept the
+  layout check as UX only, and made the shared admin API guard reject banned
+  administrators before creating a service-role client.
+- Fixed notification API error propagation and client rollback/retry behavior.
+- Hardened form/network failure handling, customer-only Book Now visibility,
+  labels/ARIA, role-radio semantics, and localized mobile navigation labeling.
+- Installed a fail-closed containment hold for service-request applications: the
+  API returns 503 before auth/database work and serviceiros see a localized
+  unavailable notice instead of an actionable Apply control.
+- Pinned Node 24/npm 11, applied supported patch/minor dependency upgrades,
+  moved CSS build tooling to dev dependencies, and made Vercel the documented
+  canonical host.
+
+## Verification
+
+- Exact Node 24/npm 11 `npm run quality`: PASS.
+  - ESLint: PASS, zero warnings.
+  - TypeScript: PASS.
+  - Jest: PASS, 15 suites and 100 tests.
+  - Next.js 15.5.20 production build: PASS, 36 routes/pages.
+  - `npm audit --audit-level=moderate`: PASS, zero vulnerabilities.
+- `npm run package`: PASS with OpenNext 1.20.1; Windows compatibility warning
+  remains expected for this optional inactive Cloudflare path.
+- `git diff --check`: PASS apart from repository line-ending notices.
+- All six documented production URLs returned HTTP 200 during the read-only
+  portfolio preflight; no authenticated or write flow was exercised.
+
+## Required owner-gated continuation
+
+1. Before deploying this tree, inspect the target Supabase migration state and
+   apply every missing timestamped migration through
+   `20260712001000_audit-security-hardening.sql` in order. Deployment before the
+   final two hardening migrations can make protected writes fail closed.
+2. Before migration 010, run a duplicate precheck:
+
+   ```sql
+   SELECT serviceiro_id, COUNT(*)
+   FROM verification_requests
+   WHERE status IN ('pending', 'approved')
+   GROUP BY serviceiro_id
+   HAVING COUNT(*) > 1;
+   ```
+
+   Resolve any returned duplicates deliberately before creating the unique
+   index.
+3. After migration 010, verify with real `anon` and `authenticated` roles that
+   direct reads of `profiles.whatsapp` and `profiles.discord` fail while safe
+   public profile fields and the authenticated user's `my_contact_info()` work.
+   Also exercise banned-user booking/message rejection and concurrent rate-limit
+   behavior against a disposable local or authorized project.
+4. Finish the Resend/Vercel/Supabase setup from
+   `_ops\docs\CONTINUE-REMAINING-SETUP-2026-07-12.md`, deploy the exact reviewed
+   tree, then run owner-approved booking/email/live smoke tests with cleanup.
+
+## Deferred findings with explicit rationale
+
+- **P1 service-request offer semantics:** The unsafe apply path is contained by
+  a centralized hard-off flag, a stable pre-auth 503 response, and a non-actionable
+  localized UI state. The product decision between multi-applicant customer
+  selection and first-match behavior remains open; re-enable only after the
+  matching transactional schema/API/UI migration and customer-acceptance tests.
+- **P1 delivery durability:** booking changes commit before email/notification
+  delivery; provider failure can be lost because there is no transactional
+  outbox/retry worker. The current awaited helper prevents abandoned serverless
+  work but is not a durable-delivery guarantee. Add an idempotent outbox and
+  worker before treating notifications as guaranteed.
+- **P1 scale boundaries:** browse and message retrieval are unbounded, and
+  analytics reduces full histories in Node. Add server-side/cursor pagination
+  and SQL/RPC aggregates before data approaches Supabase row caps.
+- **P2 database proof/tooling:** migration tests are static contracts because no
+  local PostgreSQL/Supabase runtime was available. Add a disposable DB/pgTAP
+  integration lane and generated Supabase `Database` types with CI drift checks.
+- **Planned majors:** Next 16/React 19/ESLint 9, Tailwind 4, Supabase SSR 0.12,
+  and TypeScript 7 are intentionally separate migrations, not lockfile churn.
+
+---
+
 # Session Handoff - 2026-05-11
 
 ## What was done
@@ -33,7 +166,7 @@
 
 ## What is next
 
-1. Apply and verify the canonical database state manually before any production deployment: `supabase/schema.sql`, then migrations `001` through `009` in order.
+1. Apply and verify the canonical database state manually before any production deployment: `supabase/schema.sql`, then every timestamped migration in filename order.
 2. Run owner-approved hosted smoke checks only after deployment and with explicit live-service boundaries.
 3. Run any Resend smoke manually only after selecting a real sender and recipient.
 
@@ -47,7 +180,7 @@
 - Fixed the GitHub Actions Quality run failure on `master` after commit `3ab5a91`: Jest could not parse `jest.config.ts` in a clean `npm ci` environment because `ts-node` was not installed.
 - Converted Jest config to `jest.config.js`, added it to the lint target, and upgraded the workflow to Node 24-compatible `actions/checkout@v6` and `actions/setup-node@v6`.
 - Completed follow-up review fixes before commit:
-  - Strengthened `supabase/migrations/009-contract-hardening.sql` so public booking updates now enforce service type/created-at immutability, final-state immutability, monotonic confirmation flags, active-only price changes, completed-state invariants, and no unrelated field changes during status transitions.
+  - Strengthened `supabase/migrations/20260430000900_contract-hardening.sql` so public booking updates now enforce service type/created-at immutability, final-state immutability, monotonic confirmation flags, active-only price changes, completed-state invariants, and no unrelated field changes during status transitions.
   - Replaced action rate limiting's route-level count/insert with the atomic `check_api_action_rate_limit()` RPC and changed `checkActionRateLimit()` to fail closed on persistence errors.
   - Required `content-length` on identity verification multipart uploads before parsing form data.
   - Revalidated service-request customer eligibility before the service-role booking insert in `/api/service-requests/[id]/apply`.
@@ -72,7 +205,7 @@ Nothing is intentionally left in progress.
 
 ## What's next
 
-1. Run `supabase/schema.sql`, then migrations `001` through `009` in order on the target Supabase project before production deployment.
+1. Run `supabase/schema.sql`, then every timestamped migration in filename order on the target Supabase project before production deployment.
 2. Bootstrap the first production admin only after email confirmation, using the verified `auth.users.id`.
 3. Live smoke-test production flows after migration/deploy: registration, booking, dispute open/resolve, review insert, featured listing activation, verification upload, notification bell, and email delivery.
 4. Optional next polish: generated Supabase `Database` types and server-side pagination/filtering for public list pages.

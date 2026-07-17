@@ -7,7 +7,7 @@ import {
   forbidden,
   badRequest,
   serverError,
-  checkRateLimit,
+  checkActionRateLimit,
   tooManyRequests,
   parseJsonBody,
 } from '@/lib/api-helpers'
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     return forbidden('banned')
   }
 
-  const rateLimited = await checkRateLimit(supabase, 'service_requests', 'customer_id', user.id, 60_000, 3)
+  const rateLimited = await checkActionRateLimit(user.id, 'create_service_request', 60_000, 3)
   if (rateLimited) return tooManyRequests()
 
   const parsed = await parseJsonBody(request)

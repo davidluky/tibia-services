@@ -22,8 +22,7 @@ REST endpoints. All routes use helpers from `api-helpers.ts`:
 - `getAuthUser()` -- get authenticated user + supabase client
 - `requireAdmin()` -- verify admin role, return admin client
 - `parseJsonBody()` -- safe JSON parsing with 400 responses for malformed payloads
-- `checkRateLimit()` -- database-backed per-user rate limiting from domain rows
-- `checkActionRateLimit()` -- database-backed action ledger rate limiting
+- `checkActionRateLimit()` -- atomic database-backed action ledger rate limiting; fails closed if the RPC cannot record the attempt
 - `apiError()`, `unauthorized()`, `forbidden()`, etc. -- standardized error responses
 
 ### Lib (src/lib/)
@@ -107,10 +106,10 @@ While active:
    ```
 4. For admin routes, use `requireAdmin()` instead
 5. Parse JSON request bodies with `parseJsonBody()` before reading fields
-6. Query via `supabase` (respects RLS) or `createAdminClient()` (bypasses RLS)
+6. Query via `supabase` (respects RLS) or, only after explicit server-side authorization, `createAdminClient()` (bypasses RLS)
 7. Add rate limiting on write endpoints:
    ```typescript
-    const limited = await checkRateLimit(supabase, 'table_name', 'user_id', user.id, 60000, 3)
+   const limited = await checkActionRateLimit(user.id, 'create_domain_row', 60_000, 3)
    if (limited) return tooManyRequests()
    ```
 
@@ -147,8 +146,8 @@ Admin panel uses server-side translations via `getServerT()` and the `tibia_lang
 ## Common Pitfalls
 
 - **RLS policies block your query?** Check that the authenticated user matches the policy conditions. Use the admin client only for admin operations.
-- **Admin client in client component?** Never. The service_role key must never reach the browser. Only use `createAdminClient()` in API routes.
-- **Rate limiting false positives?** `checkRateLimit()` queries the table for recent rows. If the table has no timestamp column, use `checkActionRateLimit()` and the `api_rate_limits` ledger instead.
+- **Admin client in client component?** Never. The service_role key must never reach the browser. API routes use `requireAdmin()`; admin Server Component pages call `requireAdminPage()` at the same data access before using the client. A parent layout check alone is not enough.
+- **Rate limiting unexpectedly returns 429?** `checkActionRateLimit()` fails closed if the migration 009 RPC/table is missing or errors. Verify the canonical migration state and inspect the server log; do not replace it with a raceable count-before-insert check.
 - **TC validation errors?** TC amounts must be multiples of 25, min 25, max 100,000. Use `isValidTC()` before storing.
 - **Missing i18n key?** Add the key to all 3 language blocks in `i18n.ts`. The `t()` function returns the key itself if not found.
 - **Booking status not changing?** Dual confirmation is required for price, payment, and completion. Both parties must confirm, and migration 009 enforces allowed status transitions at the DB layer.

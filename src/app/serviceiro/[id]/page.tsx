@@ -53,6 +53,17 @@ export default async function ServiceiroProfilePage(props: PageProps) {
 
   // Get current user session
   const { data: { user } } = await supabase.auth.getUser()
+  let currentUserRole: string | null = null
+
+  if (user) {
+    const { data: currentUserProfile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    currentUserRole = currentUserProfile?.role ?? null
+  }
 
   // Fetch profile
   const { data: profile } = await supabase
@@ -235,7 +246,7 @@ export default async function ServiceiroProfilePage(props: PageProps) {
         {/* Right column: actions */}
         <div className="space-y-4">
           {/* Book now */}
-          {user && user.id !== params.id ? (
+          {user && currentUserRole === 'customer' && user.id !== params.id ? (
             <BookNowSection serviceiroId={params.id} serviceiroName={profile.display_name} gameplayTypes={sp.gameplay_types ?? []} />
           ) : !user ? (
             <Card className="p-5 text-center">

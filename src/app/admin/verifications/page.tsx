@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdminPage } from '@/lib/admin-auth'
 import { formatDate } from '@/lib/utils'
 import { getServerT } from '@/lib/i18n-server'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -11,7 +11,7 @@ export default async function VerificationsPage(
   }
 ) {
   const searchParams = await props.searchParams;
-  const admin = createAdminClient()
+  const { adminClient: admin } = await requireAdminPage()
   const t = await getServerT()
   const page = Number(searchParams.page ?? 1)
   const perPage = 25

@@ -13,6 +13,7 @@ jest.mock('next/server', () => ({
 jest.mock('@/lib/supabase/server', () => ({ createClient: jest.fn() }))
 jest.mock('@/lib/supabase/admin', () => ({ createAdminClient: jest.fn() }))
 
+import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import {
   apiError,
@@ -23,6 +24,7 @@ import {
   serverError,
   tooManyRequests,
   rejectOversizedRequest,
+  requireAdmin,
   checkActionRateLimit,
 } from '@/lib/api-helpers'
 
@@ -89,5 +91,49 @@ describe('API error helpers', () => {
     })
 
     await expect(checkActionRateLimit('user-id', 'action', 1000, 1)).resolves.toBe(false)
+  })
+})
+
+describe('API admin authorization', () => {
+  function serverClient(profile: { role: string; is_banned: boolean } | null) {
+    const query = {
+      select: jest.fn(),
+      eq: jest.fn(),
+      single: jest.fn().mockResolvedValue({ data: profile }),
+    }
+    query.select.mockReturnValue(query)
+    query.eq.mockReturnValue(query)
+
+    return {
+      auth: {
+        getUser: jest.fn().mockResolvedValue({ data: { user: { id: 'admin-1' } } }),
+      },
+      from: jest.fn(() => query),
+    }
+  }
+
+  it.each([
+    { role: 'customer', is_banned: false },
+    { role: 'admin', is_banned: true },
+  ])('rejects an unauthorized or banned admin before creating a service-role client', async profile => {
+    ;(createClient as jest.Mock).mockResolvedValue(serverClient(profile))
+
+    await expect(requireAdmin()).resolves.toEqual({ authorized: false })
+    expect(createAdminClient).not.toHaveBeenCalled()
+  })
+
+  it('creates a service-role client only for a non-banned admin', async () => {
+    const adminClient = { marker: 'admin-client' }
+    ;(createClient as jest.Mock).mockResolvedValue(serverClient({
+      role: 'admin',
+      is_banned: false,
+    }))
+    ;(createAdminClient as jest.Mock).mockReturnValue(adminClient)
+
+    await expect(requireAdmin()).resolves.toEqual({
+      authorized: true,
+      user: { id: 'admin-1' },
+      adminClient,
+    })
   })
 })

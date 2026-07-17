@@ -16,20 +16,21 @@ The browser client uses `createBrowserClient()` from `@supabase/ssr`. The server
 
 ## Canonical Database State
 
-The production database contract is `supabase/schema.sql` followed by every numbered migration in `supabase/migrations/`, in filename order. `schema.sql` is the base snapshot; migrations 001-009 carry the post-schema features and hardening, including character verification fields, disputes, featured listings, service requests, notifications, contact column lockdown, booking field lockdown, and contract hardening.
+The production database contract is `supabase/schema.sql` followed by every timestamped migration in `supabase/migrations/`, in filename order. `schema.sql` is the base snapshot; the ten migrations carry the post-schema features and hardening, including character verification fields, disputes, featured listings, service requests, notifications, explicit contact-column grants, booking field lockdown, and audit security hardening.
 
-Migration `009-contract-hardening.sql` moves booking `status` and `completed_at` transition enforcement to the database layer, tightens serviceiro/review/featured policies, protects verification fields from self-modification, and adds the `api_rate_limits` ledger table.
+Migration `20260430000900_contract-hardening.sql` moves booking `status` and `completed_at` transition enforcement to the database layer, tightens serviceiro/review/featured policies, protects verification fields from self-modification, and adds the `api_rate_limits` ledger table.
+
+Migration `20260712001000_audit-security-hardening.sql` fixes the remaining table-grant contact exposure, blocks banned booking/message writes, constrains active verification requests, and performs paid admin verification review in one locked transaction.
 
 ## Rate Limiting
 
-Implemented in `api-helpers.ts` via two patterns:
+Implemented in `api-helpers.ts` through the atomic action ledger:
 
 ```typescript
-checkRateLimit(supabase, table, userIdColumn, userId, windowMs, maxRequests)
 checkActionRateLimit(userId, action, windowMs, maxRequests)
 ```
 
-`checkRateLimit()` queries the target domain table for rows matching the user within the time window. `checkActionRateLimit()` writes to the `api_rate_limits` ledger from migration 009 and is used when the route needs throttling before a durable domain row exists.
+`checkActionRateLimit()` writes to the `api_rate_limits` ledger from migration 009 under a per-user/action transaction advisory lock. All current protected write routes use this path so parallel requests cannot all pass a separate count-before-insert check.
 
 Current limits:
 - Bookings: 3 per minute
@@ -62,12 +63,14 @@ Validation: character name must be 1-30 chars, letters and spaces only.
 Used for verification requests (screenshot + ID document).
 
 - Bucket: `verifications` (private)
-- MIME validation: only image types accepted
+- MIME and magic-byte validation: only JPEG, PNG, and WebP signatures accepted
 - Size limit: 5MB
 - Path format: `{userId}/screenshot-{uuid}.{ext}` and `{userId}/id-{uuid}.{ext}`
 - Upload path: `POST /api/verification` receives the files as form data and uploads them server-side with the admin Supabase client. The browser does not write directly to Storage.
 - Database values: `verification_requests.screenshot_url` and `id_document_url` store private storage paths, not public URLs.
 - Admin review: `/admin/verifications/[id]` creates signed URLs from the private `verifications` bucket for preview; current signed URL TTL is 3600 seconds.
+- Failure cleanup: a successful sibling upload is removed if the other upload fails, and both objects are removed if the request row cannot be created.
+- Review cleanup: migration 010 reviews approve/reject atomically; after commit the route removes both private objects best-effort and logs any cleanup failure for retry.
 
 The bucket must remain private. Public access should not be enabled for identity documents.
 
@@ -83,7 +86,7 @@ Status Transitions:
   disputed  → resolved   (admin resolves)
 ```
 
-Invalid transitions are blocked in both the API route (`/api/bookings/[id]`) and the database trigger added by migration `009-contract-hardening.sql`. The trigger also keeps service type immutable, blocks post-final-state participant updates, keeps owner confirmation flags monotonic, and prevents status transitions from smuggling unrelated field changes. Dispute open/resolve transitions use atomic database functions so the `disputes` row and related booking status move together.
+Invalid transitions are blocked in both the API route (`/api/bookings/[id]`) and the database trigger added by migration `20260430000900_contract-hardening.sql`. The trigger also keeps service type immutable, blocks post-final-state participant updates, keeps owner confirmation flags monotonic, and prevents status transitions from smuggling unrelated field changes. Dispute open/resolve transitions use atomic database functions so the `disputes` row and related booking status move together.
 
 ### Dual Confirmation Pattern
 
@@ -97,7 +100,7 @@ If one party changes the proposed price, both confirmation flags reset.
 
 ## Action Rate Limiting
 
-Routes that do not naturally create a domain row use `checkActionRateLimit()`. The helper calls the `check_api_action_rate_limit()` RPC from migration `009-contract-hardening.sql`, which serializes each `(user_id, action)` check with a transaction advisory lock, records the accepted attempt in the same transaction, and fails closed if the RPC errors.
+Routes that do not naturally create a domain row use `checkActionRateLimit()`. The helper calls the `check_api_action_rate_limit()` RPC from migration `20260430000900_contract-hardening.sql`, which serializes each `(user_id, action)` check with a transaction advisory lock, records the accepted attempt in the same transaction, and fails closed if the RPC errors.
 
 ## Featured Listings TC Calculation
 
