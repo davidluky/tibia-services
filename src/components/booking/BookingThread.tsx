@@ -16,6 +16,10 @@ interface BookingThreadProps {
   dispute?: Dispute
 }
 
+// Fallback refresh cadence when the realtime channel is not delivering.
+const MESSAGE_POLL_MS = 15_000
+const MESSAGE_SUBSCRIBE_TIMEOUT_MS = 8_000
+
 const STATUS_VARIANTS: Record<string, string> = {
   pending: 'bg-status-warning/10 text-status-warning border border-status-warning/20',
   active: 'bg-status-success/10 text-status-success border border-status-success/20',
@@ -77,6 +81,24 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
   useEffect(() => {
     fetchMessages()
 
+    // Realtime is the fast path, not the only one: if the messages table is not
+    // in the supabase_realtime publication, or the socket drops, postgres_changes
+    // goes silent without an error. Poll as a safety net so chat never stalls.
+    let poll: ReturnType<typeof setInterval> | null = null
+    let realtimeReady = false
+    let disposed = false
+    const startPolling = () => {
+      // removeChannel() delivers 'CLOSED' to the status callback synchronously,
+      // so without this guard teardown would re-arm the interval it just cleared.
+      if (disposed || poll) return
+      poll = setInterval(fetchMessages, MESSAGE_POLL_MS)
+    }
+    const stopPolling = () => {
+      if (!poll) return
+      clearInterval(poll)
+      poll = null
+    }
+
     const channel = supabase
       .channel(`booking-messages-${booking.id}`)
       .on(
@@ -95,9 +117,26 @@ export function BookingThread({ booking: initialBooking, currentUserId, currentU
           })
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        realtimeReady = status === 'SUBSCRIBED'
+        if (realtimeReady) {
+          stopPolling()
+        } else {
+          // CHANNEL_ERROR, TIMED_OUT or CLOSED — fall back to polling.
+          startPolling()
+        }
+      })
+
+    // Nothing guarantees the callback ever fires (a hung socket reports no
+    // status at all), so arm the fallback if it has not confirmed by then.
+    const confirmTimer = setTimeout(() => {
+      if (!realtimeReady) startPolling()
+    }, MESSAGE_SUBSCRIBE_TIMEOUT_MS)
 
     return () => {
+      disposed = true
+      clearTimeout(confirmTimer)
+      stopPolling()
       supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

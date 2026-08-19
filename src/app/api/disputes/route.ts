@@ -9,12 +9,18 @@ import {
   forbidden,
   apiError,
   serverError,
+  tooManyRequests,
+  checkActionRateLimit,
   parseJsonBody,
 } from '@/lib/api-helpers'
 
 export async function POST(request: NextRequest) {
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
+
+  // Rate limit: max 3 dispute attempts per minute per user
+  const rateLimited = await checkActionRateLimit(user.id, 'open_dispute', 60_000, 3)
+  if (rateLimited) return tooManyRequests()
 
   const parsed = await parseJsonBody(request)
   if (!parsed.ok) return parsed.response

@@ -5,6 +5,15 @@ import { getServerT } from '@/lib/i18n-server'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { VerifiedIcon } from '@/components/ui/icons'
 
+interface AdminVerificationListRow {
+  id: string
+  serviceiro: { display_name: string } | null
+  character_name: string
+  submitted_at: string
+  fee_paid: boolean
+  status: string
+}
+
 export default async function VerificationsPage(
   props: {
     searchParams: Promise<{ page?: string }>
@@ -20,9 +29,10 @@ export default async function VerificationsPage(
 
   const { data: requests, count } = await admin
     .from('verification_requests')
-    .select('*, serviceiro:profiles!serviceiro_id(display_name)', { count: 'exact' })
+    .select('id, character_name, submitted_at, fee_paid, status, serviceiro:profiles!serviceiro_id(display_name)', { count: 'exact' })
     .order('submitted_at', { ascending: false })
     .range(from, to)
+    .overrideTypes<AdminVerificationListRow[], { merge: false }>()
 
   const totalPages = Math.ceil((count ?? 0) / perPage)
 
@@ -62,14 +72,7 @@ export default async function VerificationsPage(
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {requests.map((req: {
-                  id: string
-                  serviceiro: { display_name: string } | null
-                  character_name: string
-                  submitted_at: string
-                  fee_paid: boolean
-                  status: string
-                }) => (
+                {requests.map(req => (
                   <tr key={req.id} className="hover:bg-bg-card transition-colors">
                     <td className="py-3 pr-4 text-text-primary">{req.serviceiro?.display_name}</td>
                     <td className="py-3 pr-4 text-text-muted">{req.character_name}</td>

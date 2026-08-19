@@ -15,6 +15,7 @@ jest.mock('@/lib/api-helpers', () => ({
   notFound: jest.fn(),
   forbidden: jest.fn(),
   badRequest: jest.fn(),
+  apiError: jest.fn((message: string, status: number) => ({ status, message })),
   tooManyRequests: jest.fn(),
   serverError: jest.fn(),
 }))
@@ -34,13 +35,14 @@ jest.mock('@/lib/supabase/admin', () => ({
 import type { NextRequest } from 'next/server'
 import { POST } from '@/app/api/bookings/route'
 import { PATCH } from '@/app/api/bookings/[id]/route'
-import { getAuthUser, parseJsonBody, checkActionRateLimit } from '@/lib/api-helpers'
+import { getAuthUser, parseJsonBody, checkActionRateLimit, apiError } from '@/lib/api-helpers'
 import { sendBookingCreated, sendBookingAccepted } from '@/lib/email'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const mockGetAuthUser = getAuthUser as jest.Mock
 const mockParseJsonBody = parseJsonBody as jest.Mock
 const mockCheckActionRateLimit = checkActionRateLimit as jest.Mock
+const mockApiError = apiError as jest.Mock
 const mockSendBookingCreated = sendBookingCreated as jest.Mock
 const mockSendBookingAccepted = sendBookingAccepted as jest.Mock
 const mockCreateAdminClient = createAdminClient as jest.Mock
@@ -72,6 +74,16 @@ function createBookingSupabase() {
   const serviceiroProfile = singleQuery({
     data: { id: 'serviceiro-1', role: 'serviceiro', is_banned: false },
   })
+  const pendingCheck = {
+    select: jest.fn(),
+    eq: jest.fn(),
+    limit: jest.fn(),
+    maybeSingle: jest.fn().mockResolvedValue({ data: null }),
+  }
+  pendingCheck.select.mockReturnValue(pendingCheck)
+  pendingCheck.eq.mockReturnValue(pendingCheck)
+  pendingCheck.limit.mockReturnValue(pendingCheck)
+
   const bookingInsert = {
     insert: jest.fn(),
     select: jest.fn(),
@@ -84,15 +96,18 @@ function createBookingSupabase() {
   bookingInsert.select.mockReturnValue(bookingInsert)
 
   let profileCalls = 0
+  let bookingCalls = 0
   const from = jest.fn((table: string) => {
     if (table === 'profiles') {
       return profileCalls++ === 0 ? customerProfile : serviceiroProfile
     }
-    if (table === 'bookings') return bookingInsert
+    if (table === 'bookings') {
+      return bookingCalls++ === 0 ? pendingCheck : bookingInsert
+    }
     throw new Error(`Unexpected table: ${table}`)
   })
 
-  return { from, bookingInsert }
+  return { from, pendingCheck, bookingInsert }
 }
 
 function updateBookingSupabase() {
@@ -230,6 +245,28 @@ describe('booking email handoff', () => {
 
     await POST({} as NextRequest)
 
+    expect(mockSendBookingCreated).not.toHaveBeenCalled()
+  })
+
+  it('refuses a duplicate pending request for the same pair and service type', async () => {
+    const supabase = createBookingSupabase()
+    supabase.pendingCheck.maybeSingle.mockResolvedValue({
+      data: { id: 'booking-existing' },
+    })
+    mockGetAuthUser.mockResolvedValue({
+      user: { id: 'customer-1' },
+      supabase,
+    })
+    mockParseJsonBody.mockResolvedValue({
+      ok: true,
+      data: { serviceiro_id: 'serviceiro-1', service_type: 'hunt_x1' },
+    })
+    mockCheckActionRateLimit.mockResolvedValue(false)
+
+    await POST({} as NextRequest)
+
+    expect(mockApiError).toHaveBeenCalledWith(expect.any(String), 409)
+    expect(supabase.bookingInsert.insert).not.toHaveBeenCalled()
     expect(mockSendBookingCreated).not.toHaveBeenCalled()
   })
 

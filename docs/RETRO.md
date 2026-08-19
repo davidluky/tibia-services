@@ -1,4 +1,64 @@
-# Retro - 2026-07-12 Portfolio Audit
+# Retro
+
+## 2026-08-07 explicit-boundary follow-up
+
+### What worked
+
+- Replacing wildcard queries across the complete `src/` surface was safer than
+  fixing only the three review examples. The source contract test now makes a
+  future wildcard an attributable failure.
+- Narrow `overrideTypes` declarations made each selected relationship shape
+  explicit without pretending generated Supabase types are current before the
+  pending migrations are accepted.
+- One middleware matcher protects every mutating API route, while pure policy
+  tests and middleware-wiring tests separate origin logic from framework code.
+- The new `verify:offline` command completed end to end: zero-warning lint,
+  strict type checking, 24 suites / 152 tests, 36-page production build, cached
+  audit with zero findings, and OpenNext worker packaging.
+
+### What remains uncertain
+
+- Local mocks and builds still cannot prove hosted RLS/grants, Realtime
+  publication, transaction races, provider mail, or deployment configuration.
+- Generated Supabase types remain correctly gated on acceptance/application of
+  migrations 012/013. The narrow local row types are an interim compile-time
+  contract, not hosted schema attestation.
+- Mobile nested-scroll and focus-return behavior still needs a real browser
+  smoke. The project has no remote font loader, so no local-font change was
+  applicable in this pass.
+
+### Lessons
+
+- Explicit projections need a regression gate; otherwise the shortest query
+  syntax tends to reintroduce future-column exposure.
+- A size check that permits missing `Content-Length` is not a pre-parse bound.
+  Small JSON APIs can safely require a declared length and reject ambiguity.
+- Origin policy belongs before route authentication/body/provider work, with
+  read-only methods and non-browser automation kept explicit.
+- A no-network aggregate command is valuable only when it actually runs the
+  packaging and cached-audit lanes, not just unit tests.
+
+## 2026-08-07 review
+
+### What worked
+
+Central API guards, focused route contract tests, migration text contracts, and
+OpenNext packaging kept the broad WIP batch locally coherent. The complete
+functional suite passed without modifying provider state.
+
+### What remains uncertain
+
+Mocks and SQL-text tests do not prove real Supabase roles, RLS, Realtime
+publication, transaction races, or Resend delivery. The network audit also did
+not complete, so its offline zero is only cached evidence.
+
+### Next iteration
+
+Use an authorized non-production database to apply and role-test the pending
+migrations, exercise concurrent booking/message paths, and smoke the mail
+handoff. Replace response-facing wildcard projections as each route is touched.
+
+## 2026-07-12 Portfolio Audit
 
 ## Outcome
 

@@ -5,6 +5,13 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ShieldCheckIcon } from '@/components/ui/icons'
 import { DisputeResolveForm } from './DisputeResolveForm'
 
+interface AdminDisputeRow {
+  id: string
+  reason: string
+  booking: { id: string; service_type: string } | null
+  opener: { display_name: string } | null
+}
+
 export default async function AdminDisputesPage(
   props: {
     searchParams: Promise<{ page?: string }>
@@ -21,13 +28,15 @@ export default async function AdminDisputesPage(
   const { data: disputes, count } = await admin
     .from('disputes')
     .select(`
-      *,
-      booking:bookings(id, service_type, customer_id, serviceiro_id),
+      id,
+      reason,
+      booking:bookings(id, service_type),
       opener:profiles!opened_by(display_name)
     `, { count: 'exact' })
     .eq('status', 'open')
     .order('opened_at', { ascending: true })
     .range(from, to)
+    .overrideTypes<AdminDisputeRow[], { merge: false }>()
 
   const totalPages = Math.ceil((count ?? 0) / perPage)
 
@@ -62,14 +71,14 @@ export default async function AdminDisputesPage(
                     <p className="text-xs text-text-muted">
                       {t('admin_disputes_booking')}{' '}
                       <Link
-                        href={`/bookings/${(dispute.booking as { id: string }).id}`}
+                        href={`/bookings/${dispute.booking.id}`}
                         className="text-gold hover:text-gold-bright underline"
                       >
                         {(dispute.booking as { id: string }).id.slice(0, 8)}…
                       </Link>
                       {' '}· {t('admin_disputes_service')}{' '}
                       <span className="text-text-primary">
-                        {(dispute.booking as { service_type: string }).service_type}
+                        {dispute.booking.service_type}
                       </span>
                     </p>
                   )}

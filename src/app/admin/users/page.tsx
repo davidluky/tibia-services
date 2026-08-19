@@ -22,7 +22,7 @@ export default async function UsersPage(
 
   let query = admin
     .from('profiles')
-    .select('*', { count: 'exact' })
+    .select('id, display_name, role, created_at, is_banned', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)
 
@@ -33,6 +33,11 @@ export default async function UsersPage(
   const { data: users, count } = await query
 
   const totalPages = Math.ceil((count ?? 0) / perPage)
+
+  // Encode the query: a display name containing & or # truncates a raw
+  // interpolated href and silently drops the page parameter.
+  const pageHref = (target: number) =>
+    `?${new URLSearchParams({ q: search, page: String(target) }).toString()}`
 
   return (
     <div>
@@ -103,11 +108,11 @@ export default async function UsersPage(
           {totalPages > 1 && (
             <div className="flex gap-2 mt-4 text-sm">
               {page > 1 && (
-                <a href={`?q=${search}&page=${page - 1}`} className="text-gold hover:text-gold-bright">{t('admin_page_prev')}</a>
+                <a href={pageHref(page - 1)} className="text-gold hover:text-gold-bright">{t('admin_page_prev')}</a>
               )}
               <span className="text-text-muted">{t('admin_page_of')} {page} {t('admin_page_of_total')} {totalPages}</span>
               {page < totalPages && (
-                <a href={`?q=${search}&page=${page + 1}`} className="text-gold hover:text-gold-bright">{t('admin_page_next')}</a>
+                <a href={pageHref(page + 1)} className="text-gold hover:text-gold-bright">{t('admin_page_next')}</a>
               )}
             </div>
           )}

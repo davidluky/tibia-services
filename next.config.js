@@ -9,6 +9,13 @@ const nextConfig = {
     ],
   },
   async headers() {
+    // 'unsafe-eval' is a dev-server requirement (React Refresh and webpack's
+    // eval source maps). A production App Router build never calls eval, so the
+    // directive is only relaxed outside production.
+    const scriptSrc = process.env.NODE_ENV === 'production'
+      ? "script-src 'self' 'unsafe-inline'"
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+
     return [
       {
         source: '/(.*)',
@@ -23,7 +30,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              scriptSrc,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://*.supabase.co",
               "font-src 'self' data:",

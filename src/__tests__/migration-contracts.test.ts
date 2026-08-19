@@ -9,6 +9,14 @@ const auditMigration = readFileSync(
   path.join(process.cwd(), 'supabase/migrations/20260712001000_audit-security-hardening.sql'),
   'utf8',
 )
+const priceRenegotiationMigration = readFileSync(
+  path.join(process.cwd(), 'supabase/migrations/20260725001200_booking-price-renegotiation.sql'),
+  'utf8',
+)
+const realtimeMigration = readFileSync(
+  path.join(process.cwd(), 'supabase/migrations/20260725001300_realtime-messages-publication.sql'),
+  'utf8',
+)
 
 describe('migration filenames', () => {
   it('uses Supabase CLI-compatible timestamp prefixes for every migration', () => {
@@ -68,6 +76,51 @@ describe('contract hardening migration', () => {
     expect(migration).toContain('CREATE OR REPLACE FUNCTION check_api_action_rate_limit')
     expect(migration).toContain('pg_advisory_xact_lock')
     expect(migration).toContain('GRANT EXECUTE ON FUNCTION check_api_action_rate_limit')
+  })
+})
+
+describe('booking price renegotiation migration', () => {
+  it('resets price confirmations before the per-party ownership checks', () => {
+    const resetIndex = priceRenegotiationMigration.indexOf(
+      'NEW.price_confirmed_by_serviceiro :=',
+    )
+    const ownershipIndex = priceRenegotiationMigration.indexOf(
+      'Only the serviceiro may change price_confirmed_by_serviceiro',
+    )
+
+    expect(resetIndex).toBeGreaterThan(-1)
+    expect(ownershipIndex).toBeGreaterThan(-1)
+    expect(resetIndex).toBeLessThan(ownershipIndex)
+  })
+
+  it('keeps the reset from forging the counterparty confirmation', () => {
+    expect(priceRenegotiationMigration).toContain(
+      'acting_user = OLD.customer_id AND NEW.price_confirmed_by_customer',
+    )
+    expect(priceRenegotiationMigration).toContain(
+      'acting_user = OLD.serviceiro_id AND NEW.price_confirmed_by_serviceiro',
+    )
+  })
+
+  it('restates the pinned search_path that CREATE OR REPLACE would drop', () => {
+    expect(priceRenegotiationMigration).toContain('SET search_path = pg_catalog')
+  })
+
+  it('preserves the rest of the booking state machine', () => {
+    expect(priceRenegotiationMigration).toContain('Cannot change service_type')
+    expect(priceRenegotiationMigration).toContain('Final booking states are immutable')
+    expect(priceRenegotiationMigration).toContain('Price can only change while booking is active')
+    expect(priceRenegotiationMigration).toContain('Cannot unset complete_by_customer')
+    expect(priceRenegotiationMigration).toContain('Status transition cannot change unrelated booking fields')
+    expect(priceRenegotiationMigration).toContain('Both completion flags require completed status')
+  })
+})
+
+describe('realtime messages publication migration', () => {
+  it('adds public.messages to supabase_realtime idempotently', () => {
+    expect(realtimeMigration).toContain('ALTER PUBLICATION supabase_realtime ADD TABLE public.messages')
+    expect(realtimeMigration).toContain('FROM pg_publication_tables')
+    expect(realtimeMigration).toContain("pubname = 'supabase_realtime'")
   })
 })
 

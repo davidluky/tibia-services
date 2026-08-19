@@ -15,8 +15,11 @@
     "lint": "eslint src next.config.js jest.config.js tailwind.config.ts --ext .ts,.tsx,.js --max-warnings=0",
     "typecheck": "tsc --noEmit --pretty false",
     "audit": "npm audit --audit-level=moderate",
+    "audit:offline": "npm audit --offline --audit-level=moderate",
     "quality": "npm run lint && npm run typecheck && npm test -- --runInBand && npm run build && npm run audit",
+    "quality:offline": "npm run lint && npm run typecheck && npm test -- --runInBand && npm run build && npm run audit:offline",
     "verify": "npm run quality && npm run package",
+    "verify:offline": "npm run quality:offline && npm run package",
     "test": "jest",
     "test:watch": "jest --watch"
   },
@@ -50,7 +53,6 @@
     "typescript": "^5"
   },
   "overrides": {
-    "postcss": "^8.5.18",
-    "svix": "^1.92.2"
+    "postcss": "^8.5.18"
   }
 }

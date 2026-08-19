@@ -1,8 +1,14 @@
 import { createPublicServerClient } from '@/lib/supabase/public'
 import { HomeClient } from './HomeClient'
-import type { ServiceiroWithProfile } from '@/lib/types'
+import type {
+  PublicProfile,
+  ServiceiroProfile,
+  ServiceiroWithProfile,
+} from '@/lib/types'
 import type { GameplayTypeKey } from '@/lib/constants'
 import { DEMO_PROFILE_ID_FILTER } from '@/lib/demo-profiles'
+
+type ServiceiroQueryRow = ServiceiroProfile & { profile: PublicProfile }
 
 export const revalidate = 300
 export const dynamic = 'force-static'
@@ -13,7 +19,17 @@ async function getFeaturedServiceiros(): Promise<ServiceiroWithProfile[]> {
   const { data, error } = await supabase
     .from('serviceiro_profiles')
     .select(`
-      *,
+      id,
+      vocations,
+      gameplay_types,
+      available_weekdays,
+      available_from,
+      available_to,
+      timezone_offset,
+      is_registered,
+      registered_at,
+      tibia_character,
+      tibia_char_verified,
       profile:profiles!inner(id, role, display_name, bio, is_banned, created_at)
     `)
     .eq('is_registered', true)
@@ -21,6 +37,7 @@ async function getFeaturedServiceiros(): Promise<ServiceiroWithProfile[]> {
     .eq('profiles.role', 'serviceiro')
     .not('id', 'in', DEMO_PROFILE_ID_FILTER)
     .limit(6)
+    .overrideTypes<ServiceiroQueryRow[], { merge: false }>()
 
   if (error || !data || data.length === 0) return []
 
@@ -62,7 +79,7 @@ async function getFeaturedServiceiros(): Promise<ServiceiroWithProfile[]> {
 
     return {
       ...sp,
-      profile: sp.profile as ServiceiroWithProfile['profile'],
+      profile: sp.profile,
       avg_rating,
       review_count: ratings.length,
       completion_counts: (completionMap.get(sp.id) ?? {}) as Record<GameplayTypeKey, number>,

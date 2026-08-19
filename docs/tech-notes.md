@@ -14,6 +14,32 @@ The browser client uses `createBrowserClient()` from `@supabase/ssr`. The server
 
 **Rule:** Never import `admin.ts` in any file that runs in the browser.
 
+## API Request Boundary
+
+`src/middleware.ts` covers `/api/:path*`. Read-only `GET`, `HEAD`, and `OPTIONS`
+requests pass through; mutating methods reject a mismatched `Origin` or a
+browser request marked `Sec-Fetch-Site: cross-site`. Missing origin metadata is
+allowed for non-browser automation, but an explicit malformed or opaque origin
+fails closed.
+
+JSON route handlers use `parseJsonBody()`, which requires a valid integer
+`Content-Length` no greater than 64 KiB before `request.json()` can buffer the
+body. The verification upload route keeps its separate multipart limit and
+also requires a declared length.
+
+Supabase reads enumerate returned columns instead of using `select('*')`.
+Relationship result shapes are narrowed at the query boundary until generated
+database types can replace the hand-written row interfaces after the pending
+migrations are accepted. `explicit-select-contracts.test.ts` prevents wildcard
+projections from returning silently.
+
+## Offline Verification
+
+`npm run verify:offline` aggregates lint, strict type checking, serial Jest,
+the Next production build, a cached `npm audit --offline`, and OpenNext
+packaging. It is the reproducible no-network gate; `npm run verify` remains the
+live-audit release gate.
+
 ## Canonical Database State
 
 The production database contract is `supabase/schema.sql` followed by every timestamped migration in `supabase/migrations/`, in filename order. `schema.sql` is the base snapshot; the ten migrations carry the post-schema features and hardening, including character verification fields, disputes, featured listings, service requests, notifications, explicit contact-column grants, booking field lockdown, and audit security hardening.

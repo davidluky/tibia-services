@@ -12,10 +12,10 @@ export default async function AdminPage() {
     { count: totalUsers },
     { count: totalReviews },
   ] = await Promise.all([
-    admin.from('verification_requests').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
-    admin.from('bookings').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-    admin.from('profiles').select('*', { count: 'exact', head: true }),
-    admin.from('reviews').select('*', { count: 'exact', head: true }),
+    admin.from('verification_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+    admin.from('bookings').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+    admin.from('profiles').select('id', { count: 'exact', head: true }),
+    admin.from('reviews').select('id', { count: 'exact', head: true }),
   ])
 
   const stats = [

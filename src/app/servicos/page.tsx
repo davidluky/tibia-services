@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { ServiceRequestsClient } from './ServiceRequestsClient'
 import type { Metadata } from 'next'
+import type { ServiceRequest } from '@/lib/types'
 
 export const metadata: Metadata = {
   title: 'Pedidos de Serviço | Tibia Services',
@@ -15,9 +16,10 @@ export default async function ServiceRequestsPage() {
   const [{ data: requests }, profileResult, serviceiroResult] = await Promise.all([
     supabase
       .from('service_requests')
-      .select('*, customer:profiles!customer_id(display_name)')
+      .select('id, service_type, title, description, flexible_time, preferred_date, preferred_time, budget_tc, status, created_at, customer:profiles!customer_id(display_name)')
       .eq('status', 'open')
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .overrideTypes<ServiceRequest[], { merge: false }>(),
     user
       ? supabase.from('profiles').select('role').eq('id', user.id).single()
       : Promise.resolve({ data: null }),

@@ -1,15 +1,20 @@
 import type { MetadataRoute } from 'next'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { createPublicServerClient } from '@/lib/supabase/public'
+import { DEMO_PROFILE_ID_FILTER } from '@/lib/demo-profiles'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = (process.env.APP_URL ?? 'https://tibia.davidluky.com').replace(/\/$/, '')
 
-  const admin = createAdminClient()
-  const { data: serviceiros } = await admin
+  // Anon key, not service role: this is the same public listing /browse reads,
+  // and it must exclude the seeded demo profiles /browse hides so Google is not
+  // handed three fake sellers as indexable inventory.
+  const supabase = createPublicServerClient()
+  const { data: serviceiros } = await supabase
     .from('profiles')
     .select('id, created_at')
     .eq('role', 'serviceiro')
     .eq('is_banned', false)
+    .not('id', 'in', DEMO_PROFILE_ID_FILTER)
 
   const serviceiroUrls: MetadataRoute.Sitemap = (serviceiros ?? []).map(s => ({
     url: `${baseUrl}/serviceiro/${s.id}`,

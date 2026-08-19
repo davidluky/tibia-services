@@ -10,6 +10,14 @@ import { getServerT } from '@/lib/i18n-server'
 import type { Booking } from '@/lib/types'
 import type { Metadata } from 'next'
 
+type BookingListRow = Pick<
+  Booking,
+  'id' | 'customer_id' | 'serviceiro_id' | 'service_type' | 'status' | 'created_at'
+> & {
+  customer: { display_name: string } | null
+  serviceiro: { display_name: string } | null
+}
+
 export const metadata: Metadata = {
   title: 'Minhas Reservas | Tibia Services',
   robots: {
@@ -48,17 +56,23 @@ export default async function BookingsPage() {
   const { data: bookings } = await supabase
     .from('bookings')
     .select(`
-      *,
+      id,
+      customer_id,
+      serviceiro_id,
+      service_type,
+      status,
+      created_at,
       customer:profiles!customer_id(display_name),
       serviceiro:profiles!serviceiro_id(display_name)
     `)
     .or(`customer_id.eq.${user.id},serviceiro_id.eq.${user.id}`)
     .order('created_at', { ascending: false })
+    .overrideTypes<BookingListRow[], { merge: false }>()
 
   const groups = {
-    active: (bookings ?? []).filter((b: Booking) => b.status === 'active'),
-    pending: (bookings ?? []).filter((b: Booking) => b.status === 'pending'),
-    completed: (bookings ?? []).filter((b: Booking) => ['completed', 'declined', 'cancelled', 'disputed', 'resolved'].includes(b.status)),
+    active: (bookings ?? []).filter(b => b.status === 'active'),
+    pending: (bookings ?? []).filter(b => b.status === 'pending'),
+    completed: (bookings ?? []).filter(b => ['completed', 'declined', 'cancelled', 'disputed', 'resolved'].includes(b.status)),
   }
 
   return (
@@ -95,7 +109,7 @@ export default async function BookingsPage() {
 
 function BookingGroup({ title, bookings, currentUserId }: {
   title: string
-  bookings: (Booking & { customer: { display_name: string } | null, serviceiro: { display_name: string } | null })[]
+  bookings: BookingListRow[]
   currentUserId: string
 }) {
   return (

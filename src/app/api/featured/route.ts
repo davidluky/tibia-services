@@ -7,6 +7,8 @@ import {
   badRequest,
   apiError,
   serverError,
+  tooManyRequests,
+  checkActionRateLimit,
   parseJsonBody,
 } from '@/lib/api-helpers'
 
@@ -27,7 +29,7 @@ export async function GET() {
   const admin = createAdminClient()
   const { data: listing } = await admin
     .from('featured_listings')
-    .select('*')
+    .select('id, serviceiro_id, tc_amount, days_requested, status, requested_at, confirmed_at, expires_at')
     .eq('serviceiro_id', user.id)
     .neq('status', 'canceled')
     .order('requested_at', { ascending: false })
@@ -50,6 +52,10 @@ export async function POST(request: NextRequest) {
   if (!profile || profile.role !== 'serviceiro') {
     return forbidden('Acesso negado.')
   }
+
+  // Rate limit: max 3 featured requests per minute per serviceiro
+  const rateLimited = await checkActionRateLimit(user.id, 'request_featured', 60_000, 3)
+  if (rateLimited) return tooManyRequests()
 
   const parsed = await parseJsonBody(request)
   if (!parsed.ok) return parsed.response

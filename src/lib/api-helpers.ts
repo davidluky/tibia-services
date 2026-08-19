@@ -36,9 +36,23 @@ export function payloadTooLarge(message = 'Payload too large') {
   return apiError(message, 413)
 }
 
+// No JSON route needs more than this: the largest field any handler accepts is
+// a 1,000-character message or comment. Reject on the header so the runtime is
+// never asked to buffer and parse a multi-megabyte document first.
+export const MAX_JSON_BODY_SIZE = 64 * 1024
+
 export async function parseJsonBody<T extends Record<string, unknown>>(
   request: Request,
+  maxBytes = MAX_JSON_BODY_SIZE,
 ): Promise<{ ok: true; data: T } | { ok: false; response: NextResponse }> {
+  // A declared length lets the runtime reject the request before buffering its
+  // JSON body. Refuse chunked/ambiguous JSON rather than accepting an
+  // effectively unbounded request that cannot be checked ahead of parsing.
+  const oversized = rejectOversizedRequest(request, maxBytes, {
+    requireContentLength: true,
+  })
+  if (oversized) return { ok: false, response: oversized }
+
   try {
     const data = await request.json()
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
@@ -61,7 +75,7 @@ export function rejectOversizedRequest(
   }
 
   const bytes = Number(contentLength)
-  if (!Number.isFinite(bytes) || bytes < 0) {
+  if (!Number.isSafeInteger(bytes) || bytes < 0) {
     return badRequest('invalid_content_length')
   }
 

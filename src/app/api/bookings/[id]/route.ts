@@ -13,6 +13,8 @@ import {
   forbidden,
   badRequest,
   serverError,
+  tooManyRequests,
+  checkActionRateLimit,
   parseJsonBody,
 } from '@/lib/api-helpers'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -30,7 +32,20 @@ export async function GET(_request: NextRequest, props: { params: Promise<{ id: 
   const { data: booking } = await supabase
     .from('bookings')
     .select(`
-      *,
+      id,
+      customer_id,
+      serviceiro_id,
+      service_type,
+      agreed_price_tc,
+      price_confirmed_by_customer,
+      price_confirmed_by_serviceiro,
+      payment_sent_by_customer,
+      payment_received_by_serviceiro,
+      complete_by_customer,
+      complete_by_serviceiro,
+      status,
+      created_at,
+      completed_at,
       customer:profiles!customer_id(id, display_name, role, bio, is_banned, created_at),
       serviceiro:profiles!serviceiro_id(id, display_name, role, bio, is_banned, created_at)
     `)
@@ -61,10 +76,30 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
     return forbidden('Conta suspensa.')
   }
 
+  // Rate limit: accept/decline/cancel/complete each fan out to email, so cap
+  // transitions per minute per user. 20 leaves room for a normal negotiation.
+  const rateLimited = await checkActionRateLimit(user.id, 'update_booking', 60_000, 20)
+  if (rateLimited) return tooManyRequests()
+
   // Fetch the booking to verify participant status
   const { data: booking } = await supabase
     .from('bookings')
-    .select('*')
+    .select(`
+      id,
+      customer_id,
+      serviceiro_id,
+      service_type,
+      agreed_price_tc,
+      price_confirmed_by_customer,
+      price_confirmed_by_serviceiro,
+      payment_sent_by_customer,
+      payment_received_by_serviceiro,
+      complete_by_customer,
+      complete_by_serviceiro,
+      status,
+      created_at,
+      completed_at
+    `)
     .eq('id', params.id)
     .single()
 
@@ -131,11 +166,12 @@ export async function PATCH(request: NextRequest, props: { params: Promise<{ id:
         return badRequest('Preço inválido. Deve ser múltiplo de 25 TC.')
       }
       if (booking.status !== 'active') return badRequest('Reserva não está ativa.')
-      update = {
-        agreed_price_tc: price_tc,
-        price_confirmed_by_customer: isCustomer,
-        price_confirmed_by_serviceiro: isServiceiro,
-      }
+      // Write only the proposing party's own confirmation. The booking trigger
+      // rejects an UPDATE that touches the counterparty's price flag, and its
+      // price-change contract already clears that flag when agreed_price_tc
+      // moves — so a counter-offer must not send it.
+      if (isCustomer) update = { agreed_price_tc: price_tc, price_confirmed_by_customer: true }
+      else update = { agreed_price_tc: price_tc, price_confirmed_by_serviceiro: true }
       break
 
     case 'confirm_price':

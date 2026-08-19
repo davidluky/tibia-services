@@ -41,7 +41,7 @@ export default async function DashboardPage() {
 
   const { data: sp } = await supabase
     .from('serviceiro_profiles')
-    .select('*')
+    .select('vocations, gameplay_types, available_weekdays, available_from, available_to, timezone_offset, is_registered')
     .eq('id', user.id)
     .single()
 
