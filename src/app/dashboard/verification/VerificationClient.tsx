@@ -9,7 +9,10 @@ import { useLanguage } from '@/lib/language-context'
 
 interface VerificationClientProps {
   userId: string
-  existing: VerificationRequest | null
+  existing: Pick<
+    VerificationRequest,
+    'character_name' | 'fee_paid' | 'status' | 'admin_notes'
+  > | null
 }
 
 const STATUS_COLORS: Record<string, string> = {

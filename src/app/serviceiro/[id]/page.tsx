@@ -16,6 +16,10 @@ import { isDemoProfileId } from '@/lib/demo-profiles'
 import type { Review } from '@/lib/types'
 import type { GameplayTypeKey } from '@/lib/constants'
 
+type PublicReviewRow = Pick<Review, 'id' | 'rating' | 'comment' | 'created_at'> & {
+  reviewer: { display_name: string } | null
+}
+
 interface PageProps {
   params: Promise<{ id: string }>
 }
@@ -78,7 +82,7 @@ export default async function ServiceiroProfilePage(props: PageProps) {
   // Fetch serviceiro_profiles
   const { data: sp } = await supabase
     .from('serviceiro_profiles')
-    .select('*')
+    .select('id, vocations, gameplay_types, available_weekdays, available_from, available_to, timezone_offset, is_registered, tibia_character, tibia_char_verified')
     .eq('id', params.id)
     .single()
 
@@ -87,10 +91,11 @@ export default async function ServiceiroProfilePage(props: PageProps) {
   // Fetch reviews
   const { data: reviews } = await supabase
     .from('reviews')
-    .select('*, reviewer:profiles!reviewer_id(display_name)')
+    .select('id, rating, comment, created_at, reviewer:profiles!reviewer_id(display_name)')
     .eq('serviceiro_id', params.id)
     .eq('is_visible', true)
     .order('created_at', { ascending: false })
+    .overrideTypes<PublicReviewRow[], { merge: false }>()
 
   // Fetch completion counts
   const { data: completions } = await supabase
@@ -105,7 +110,7 @@ export default async function ServiceiroProfilePage(props: PageProps) {
   const totalCompleted = Object.values(completion_counts).reduce((a, b) => a + b, 0)
 
   const avg_rating = reviews && reviews.length > 0
-    ? reviews.reduce((sum: number, r: Review) => sum + r.rating, 0) / reviews.length
+    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
     : null
   const isDemoProfile = isDemoProfileId(params.id)
 
@@ -220,7 +225,7 @@ export default async function ServiceiroProfilePage(props: PageProps) {
             </h2>
             {reviews && reviews.length > 0 ? (
               <div className="space-y-3">
-                {reviews.map((review: Review & { reviewer: { display_name: string } | null }) => (
+                {reviews.map(review => (
                   <Card key={review.id} className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>

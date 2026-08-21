@@ -10,17 +10,20 @@ jest.mock('next/server', () => ({
 jest.mock('@/lib/api-helpers', () => ({
   getAuthUser: jest.fn(),
   parseJsonBody: jest.fn(),
+  checkActionRateLimit: jest.fn(),
   unauthorized: jest.fn(() => ({ status: 401 })),
   badRequest: jest.fn((message: string) => ({ status: 400, message })),
   serverError: jest.fn((message: string) => ({ status: 500, message })),
+  tooManyRequests: jest.fn((message?: string) => ({ status: 429, message })),
 }))
 
 import type { NextRequest } from 'next/server'
 import { GET, PATCH } from '@/app/api/notifications/route'
-import { getAuthUser, parseJsonBody } from '@/lib/api-helpers'
+import { getAuthUser, parseJsonBody, checkActionRateLimit } from '@/lib/api-helpers'
 
 const mockGetAuthUser = getAuthUser as jest.Mock
 const mockParseJsonBody = parseJsonBody as jest.Mock
+const mockCheckActionRateLimit = checkActionRateLimit as jest.Mock
 const notificationId = '123e4567-e89b-42d3-a456-426614174000'
 
 function getSupabase(result: { data: unknown; error: unknown }) {
@@ -100,5 +103,17 @@ describe('notifications API error handling', () => {
     expect(supabase.query.update).toHaveBeenCalledWith({ is_read: true })
     expect(supabase.query.in).toHaveBeenCalledWith('id', [notificationId])
     expect(supabase.query.eq).toHaveBeenCalledWith('user_id', 'user-1')
+  })
+
+  it('rate limits mark-as-read before touching Supabase', async () => {
+    const supabase = patchSupabase({ error: null })
+    mockGetAuthUser.mockResolvedValue({ user: { id: 'user-1' }, supabase })
+    mockCheckActionRateLimit.mockResolvedValue(true)
+
+    const response = await PATCH({} as NextRequest)
+
+    expect(response.status).toBe(429)
+    expect(mockParseJsonBody).not.toHaveBeenCalled()
+    expect(supabase.query.update).not.toHaveBeenCalled()
   })
 })

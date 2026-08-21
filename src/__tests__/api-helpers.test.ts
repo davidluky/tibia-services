@@ -24,6 +24,8 @@ import {
   serverError,
   tooManyRequests,
   rejectOversizedRequest,
+  parseJsonBody,
+  MAX_JSON_BODY_SIZE,
   requireAdmin,
   checkActionRateLimit,
 } from '@/lib/api-helpers'
@@ -72,6 +74,50 @@ describe('API error helpers', () => {
   it('rejects content-length above the configured limit', () => {
     const request = { headers: { get: jest.fn(() => '101') } } as unknown as Request
     expect(rejectOversizedRequest(request, 100)?.status).toBe(413)
+  })
+
+  it('rejects an oversized JSON body before request.json() runs', async () => {
+    const json = jest.fn()
+    const request = {
+      headers: { get: jest.fn(() => String(MAX_JSON_BODY_SIZE + 1)) },
+      json,
+    } as unknown as Request
+
+    const result = await parseJsonBody(request)
+
+    expect(result.ok).toBe(false)
+    expect(result.ok === false && result.response.status).toBe(413)
+    expect(json).not.toHaveBeenCalled()
+  })
+
+  it('rejects JSON without a declared size before parsing', async () => {
+    const json = jest.fn()
+    const request = {
+      headers: { get: jest.fn(() => null) },
+      json,
+    } as unknown as Request
+
+    const result = await parseJsonBody(request)
+
+    expect(result.ok).toBe(false)
+    expect(result.ok === false && result.response.status).toBe(400)
+    expect(json).not.toHaveBeenCalled()
+  })
+
+  it('rejects fractional content lengths', () => {
+    const request = { headers: { get: jest.fn(() => '12.5') } } as unknown as Request
+    expect(rejectOversizedRequest(request, 100)?.status).toBe(400)
+  })
+
+  it('parses a JSON body within the size limit', async () => {
+    const request = {
+      headers: { get: jest.fn(() => '32') },
+      json: jest.fn().mockResolvedValue({ action: 'accept' }),
+    } as unknown as Request
+
+    const result = await parseJsonBody<{ action: string }>(request)
+
+    expect(result).toEqual({ ok: true, data: { action: 'accept' } })
   })
 
   it('fails closed when action rate-limit recording errors', async () => {

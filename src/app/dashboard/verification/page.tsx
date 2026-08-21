@@ -21,7 +21,7 @@ export default async function VerificationPage() {
   // Check existing request
   const { data: existing } = await supabase
     .from('verification_requests')
-    .select('*')
+    .select('character_name, fee_paid, status, admin_notes')
     .eq('serviceiro_id', user.id)
     .order('submitted_at', { ascending: false })
     .limit(1)

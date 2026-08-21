@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthUser, unauthorized, badRequest, serverError, parseJsonBody } from '@/lib/api-helpers'
+import {
+  getAuthUser,
+  unauthorized,
+  badRequest,
+  serverError,
+  tooManyRequests,
+  checkActionRateLimit,
+  parseJsonBody,
+} from '@/lib/api-helpers'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -9,7 +17,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('notifications')
-    .select('*')
+    .select('id, user_id, type, title, body, link, is_read, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
     .limit(20)
@@ -25,6 +33,11 @@ export async function GET() {
 export async function PATCH(request: NextRequest) {
   const { user, supabase } = await getAuthUser()
   if (!user) return unauthorized()
+
+  // Rate limit: the bell marks everything read in one call, so 30/min is far
+  // above any real usage while still capping a scripted loop.
+  const rateLimited = await checkActionRateLimit(user.id, 'read_notifications', 60_000, 30)
+  if (rateLimited) return tooManyRequests()
 
   const parsed = await parseJsonBody(request)
   if (!parsed.ok) return parsed.response

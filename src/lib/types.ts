@@ -16,6 +16,8 @@ export interface Profile {
   created_at: string
 }
 
+export type PublicProfile = Omit<Profile, 'whatsapp' | 'discord'>
+
 export interface ServiceiroProfile {
   id: string
   vocations: VocationKey[]
@@ -32,7 +34,7 @@ export interface ServiceiroProfile {
 
 // Combined type used in most UI components
 export interface ServiceiroWithProfile extends ServiceiroProfile {
-  profile: Profile
+  profile: PublicProfile
   avg_rating: number | null
   review_count: number
   completion_counts: Record<GameplayTypeKey, number>
@@ -56,8 +58,8 @@ export interface Booking {
   created_at: string
   completed_at: string | null
   // Joined fields
-  customer?: Profile
-  serviceiro?: Profile
+  customer?: PublicProfile | null
+  serviceiro?: PublicProfile | null
   dispute?: Dispute
 }
 

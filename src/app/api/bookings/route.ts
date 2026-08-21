@@ -7,6 +7,7 @@ import {
   badRequest,
   forbidden,
   notFound,
+  apiError,
   tooManyRequests,
   serverError,
   checkActionRateLimit,
@@ -58,6 +59,24 @@ export async function POST(request: NextRequest) {
     return notFound('Serviceiro não encontrado.')
   }
 
+  // One outstanding request per pair and service type. The per-user rate limit
+  // below only slows a loop down; without this cap a customer can keep POSTing
+  // against one serviceiro and turn their inbox — and the shared Resend quota
+  // every other transactional email depends on — into a firehose.
+  const { data: alreadyPending } = await supabase
+    .from('bookings')
+    .select('id')
+    .eq('customer_id', user.id)
+    .eq('serviceiro_id', serviceiro_id)
+    .eq('service_type', service_type)
+    .eq('status', 'pending')
+    .limit(1)
+    .maybeSingle()
+
+  if (alreadyPending) {
+    return apiError('Você já tem uma solicitação pendente deste serviço com este serviceiro.', 409)
+  }
+
   // Rate limit: max 3 booking requests per minute per user
   const rateLimited = await checkActionRateLimit(user.id, 'create_booking', 60_000, 3)
   if (rateLimited) {
@@ -80,12 +99,25 @@ export async function POST(request: NextRequest) {
     return serverError('Erro ao criar reserva.')
   }
 
-  await sendBookingCreated({
-    bookingId: booking.id,
-    serviceiroId: serviceiro_id,
-    customerName: profile.display_name ?? 'Cliente',
-    serviceType: service_type,
-  })
+  // Recipient-side cap. The pair check and the per-user limit above both free up
+  // as soon as a request is cancelled or declined, so a create/cancel loop can
+  // still walk the shared Resend quota. Bound how often one serviceiro can be
+  // emailed about new bookings; the booking itself is unaffected either way.
+  const mailboxSaturated = await checkActionRateLimit(
+    serviceiro_id,
+    'booking_created_email',
+    60 * 60_000,
+    10,
+  )
+
+  if (!mailboxSaturated) {
+    await sendBookingCreated({
+      bookingId: booking.id,
+      serviceiroId: serviceiro_id,
+      customerName: profile.display_name ?? 'Cliente',
+      serviceType: service_type,
+    })
+  }
 
   return NextResponse.json({ id: booking.id }, { status: 201 })
 }

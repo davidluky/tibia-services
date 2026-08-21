@@ -12,6 +12,15 @@ function hoursAgo(iso: string): number {
 
 const LOCALE_MAP: Record<Locale, string> = { pt: 'pt-BR', en: 'en-US', es: 'es-ES' }
 
+interface AdminFeaturedRow {
+  id: string
+  tc_amount: number
+  days_requested: number
+  requested_at: string
+  expires_at: string | null
+  serviceiro: { display_name: string } | null
+}
+
 function formatDate(iso: string, locale: Locale): string {
   return new Date(iso).toLocaleDateString(LOCALE_MAP[locale], {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -25,16 +34,18 @@ export default async function AdminFeaturedPage() {
 
   const { data: pending } = await admin
     .from('featured_listings')
-    .select('*, serviceiro:profiles!serviceiro_id(display_name)')
+    .select('id, tc_amount, days_requested, requested_at, expires_at, serviceiro:profiles!serviceiro_id(display_name)')
     .eq('status', 'pending')
     .order('requested_at', { ascending: true })
+    .overrideTypes<AdminFeaturedRow[], { merge: false }>()
 
   const { data: active } = await admin
     .from('featured_listings')
-    .select('*, serviceiro:profiles!serviceiro_id(display_name)')
+    .select('id, tc_amount, days_requested, requested_at, expires_at, serviceiro:profiles!serviceiro_id(display_name)')
     .eq('status', 'active')
     .gt('expires_at', new Date().toISOString())
     .order('expires_at', { ascending: true })
+    .overrideTypes<AdminFeaturedRow[], { merge: false }>()
 
   const TIMEOUT_MS = 24 * 60 * 60 * 1000
 
@@ -61,7 +72,7 @@ export default async function AdminFeaturedPage() {
           <div className="space-y-4">
             {pending.map((listing) => {
               const timedOut = Date.now() - new Date(listing.requested_at).getTime() > TIMEOUT_MS
-              const serviceiro = listing.serviceiro as { display_name: string } | null
+              const serviceiro = listing.serviceiro
               return (
                 <div
                   key={listing.id}
@@ -108,7 +119,7 @@ export default async function AdminFeaturedPage() {
         ) : (
           <div className="space-y-3">
             {active.map((listing) => {
-              const serviceiro = listing.serviceiro as { display_name: string } | null
+              const serviceiro = listing.serviceiro
               return (
                 <div key={listing.id} className="border border-gold/30 bg-gold/5 rounded-lg p-4">
                   <p className="text-sm font-medium text-text-primary">

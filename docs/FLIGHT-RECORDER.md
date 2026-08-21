@@ -2,6 +2,45 @@
 
 This file captures root-cause bug classes, the guard installed, and what should prevent regression.
 
+## 2026-08-07 - Explicit Data And Request Boundaries
+
+- **Class:** Wildcard Supabase projections and mutation requests without one
+  origin boundary made future columns and cross-site browser calls depend on
+  route-by-route discipline.
+- **Impact:** A later schema column could become an unintended API/page payload,
+  private verification paths could be serialized without being rendered, and
+  cookie-authenticated mutation routes lacked a uniform CSRF-oriented check.
+- **Root cause:** Readers inferred their response shape from the current table,
+  while JSON size enforcement trusted an optional `Content-Length` and origin
+  policy was not centralized.
+- **Guard installed:** all `src/` Supabase readers enumerate columns; narrow
+  query result types describe relationship shapes; `/api/:path*` middleware
+  rejects cross-origin mutations; JSON parsing requires an integer declared
+  length no greater than 64 KiB.
+- **Regression prevention:** projection, origin-policy, middleware-wiring,
+  body-limit, and offline-script contract tests are part of the 24-suite / 152
+  test set. `npm run verify:offline` passed lint, typecheck, Jest, the 36-page
+  Next build, cached audit with zero findings, and OpenNext packaging.
+- **Scope:** no provider, migration, email, payment, account, deployment,
+  commit, or staged-state action ran. Existing owner WIP was preserved, and
+  aggregate diff ownership remains mixed where already-dirty readers/helpers
+  were extended.
+- **Review:** `docs/CODE_PROJECT_REVIEW_2026-08-07.md`.
+
+## 2026-08-07 - Local Green Does Not Attest Provider State
+
+- **Class:** A large route/migration hardening batch can be locally complete
+  while Supabase grants, Realtime publication, SMTP, and deployed configuration
+  remain unproven.
+- **Evidence:** lint and typecheck passed, 20 suites / 139 tests passed, Next
+  build passed, and OpenNext packaging passed. Live registry audit did not
+  return; cached offline audit reported zero findings.
+- **Guard:** keep migration-role/concurrency tests and an authorized hosted
+  smoke as explicit release gates. Prefer explicit API query projections over
+  `select('*')` to keep future columns from leaking.
+- **Scope:** no migration, provider, mail, deploy, commit, or push was run.
+- **Review:** `docs/CODE_PROJECT_REVIEW_2026-08-07.md`.
+
 ## 2026-07-16 - Provider Grants Survived A PUBLIC Revoke
 
 - **Class:** Supabase API roles retained direct execution of server-only

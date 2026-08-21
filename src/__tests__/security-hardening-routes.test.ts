@@ -111,6 +111,49 @@ function bannedSupabase(userId: string) {
   return { from }
 }
 
+function activeBookingSupabase(booking: Record<string, unknown>, actorId: string) {
+  const actorProfile = {
+    select: jest.fn(),
+    eq: jest.fn(),
+    maybeSingle: jest.fn().mockResolvedValue({
+      data: { id: actorId, is_banned: false },
+    }),
+  }
+  actorProfile.select.mockReturnValue(actorProfile)
+  actorProfile.eq.mockReturnValue(actorProfile)
+
+  const bookingFetch = {
+    select: jest.fn(),
+    eq: jest.fn(),
+    single: jest.fn().mockResolvedValue({ data: booking }),
+  }
+  bookingFetch.select.mockReturnValue(bookingFetch)
+  bookingFetch.eq.mockReturnValue(bookingFetch)
+
+  const participantProfiles = {
+    select: jest.fn(),
+    in: jest.fn().mockResolvedValue({ data: [] }),
+  }
+  participantProfiles.select.mockReturnValue(participantProfiles)
+
+  const updateEq = jest.fn().mockResolvedValue({ error: null })
+  const bookingUpdate = { update: jest.fn().mockReturnValue({ eq: updateEq }) }
+
+  let profileCalls = 0
+  let bookingCalls = 0
+  const from = jest.fn((table: string) => {
+    if (table === 'profiles') {
+      return profileCalls++ === 0 ? actorProfile : participantProfiles
+    }
+    if (table === 'bookings') {
+      return bookingCalls++ === 0 ? bookingFetch : bookingUpdate
+    }
+    throw new Error(`Unexpected table: ${table}`)
+  })
+
+  return { from, bookingUpdate }
+}
+
 beforeEach(() => {
   jest.clearAllMocks()
 })
@@ -188,6 +231,67 @@ describe('transactional verification review', () => {
       { message: 'storage unavailable' },
     )
     consoleError.mockRestore()
+  })
+})
+
+describe('price renegotiation contract', () => {
+  const activeBooking = {
+    id: 'booking-1',
+    customer_id: 'customer-1',
+    serviceiro_id: 'serviceiro-1',
+    service_type: 'hunt_x1',
+    status: 'active',
+    agreed_price_tc: 500,
+    price_confirmed_by_customer: false,
+    price_confirmed_by_serviceiro: true,
+  }
+
+  // The booking trigger raises 'Only the serviceiro may change
+  // price_confirmed_by_serviceiro' if the customer's counter-offer writes that
+  // flag, which turned every counter-offer into a 500. Only the acting party's
+  // own flag may be sent; the trigger clears the counterparty's itself.
+  it('writes only the proposing party own confirmation flag', async () => {
+    const supabase = activeBookingSupabase(activeBooking, 'customer-1')
+    mockGetAuthUser.mockResolvedValue({ user: { id: 'customer-1' }, supabase })
+    mockParseJsonBody.mockResolvedValue({
+      ok: true,
+      data: { action: 'set_price', price_tc: 400 },
+    })
+
+    const response = await updateBooking(
+      {} as NextRequest,
+      { params: Promise.resolve({ id: 'booking-1' }) },
+    )
+
+    expect(response.status).toBe(200)
+    expect(supabase.bookingUpdate.update).toHaveBeenCalledWith({
+      agreed_price_tc: 400,
+      price_confirmed_by_customer: true,
+    })
+  })
+
+  it('writes only the serviceiro flag when the serviceiro counter-offers', async () => {
+    const supabase = activeBookingSupabase({
+      ...activeBooking,
+      price_confirmed_by_customer: true,
+      price_confirmed_by_serviceiro: false,
+    }, 'serviceiro-1')
+    mockGetAuthUser.mockResolvedValue({ user: { id: 'serviceiro-1' }, supabase })
+    mockParseJsonBody.mockResolvedValue({
+      ok: true,
+      data: { action: 'set_price', price_tc: 600 },
+    })
+
+    const response = await updateBooking(
+      {} as NextRequest,
+      { params: Promise.resolve({ id: 'booking-1' }) },
+    )
+
+    expect(response.status).toBe(200)
+    expect(supabase.bookingUpdate.update).toHaveBeenCalledWith({
+      agreed_price_tc: 600,
+      price_confirmed_by_serviceiro: true,
+    })
   })
 })
 

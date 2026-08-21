@@ -8,6 +8,16 @@ import { VerifiedIcon } from '@/components/ui/icons'
 import { truncate } from '@/lib/utils'
 import Link from 'next/link'
 
+interface AdminReviewRow {
+  id: string
+  reviewer: { display_name: string } | null
+  serviceiro: { display_name: string } | null
+  rating: number
+  comment: string | null
+  created_at: string
+  is_visible: boolean
+}
+
 export default async function ReviewsPage(
   props: {
     searchParams: Promise<{ page?: string }>
@@ -24,12 +34,17 @@ export default async function ReviewsPage(
   const { data: reviews, count } = await admin
     .from('reviews')
     .select(`
-      *,
+      id,
+      rating,
+      comment,
+      is_visible,
+      created_at,
       reviewer:profiles!reviewer_id(display_name),
       serviceiro:profiles!serviceiro_id(display_name)
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to)
+    .overrideTypes<AdminReviewRow[], { merge: false }>()
 
   const totalPages = Math.ceil((count ?? 0) / perPage)
 
@@ -64,15 +79,7 @@ export default async function ReviewsPage(
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {reviews.map((review: {
-                  id: string
-                  reviewer: { display_name: string } | null
-                  serviceiro: { display_name: string } | null
-                  rating: number
-                  comment: string | null
-                  created_at: string
-                  is_visible: boolean
-                }) => (
+                {reviews.map(review => (
                   <tr key={review.id} className={`hover:bg-bg-card transition-colors ${!review.is_visible ? 'opacity-50' : ''}`}>
                     <td className="py-3 pr-4 text-text-primary">{review.reviewer?.display_name}</td>
                     <td className="py-3 pr-4 text-text-muted">{review.serviceiro?.display_name}</td>

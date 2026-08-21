@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   const { data: messages, error } = await supabase
     .from('messages')
-    .select('*, sender:profiles!sender_id(display_name)')
+    .select('id, booking_id, sender_id, content, created_at, sender:profiles!sender_id(display_name)')
     .eq('booking_id', booking_id)
     .order('created_at', { ascending: true })
 
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       sender_id: user.id,
       content: sanitizeText(content),
     })
-    .select('*, sender:profiles!sender_id(display_name)')
+    .select('id, booking_id, sender_id, content, created_at, sender:profiles!sender_id(display_name)')
     .single()
 
   if (error) return serverError('Erro ao enviar mensagem.')

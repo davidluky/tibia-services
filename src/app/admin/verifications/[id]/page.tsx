@@ -4,6 +4,18 @@ import { formatDate } from '@/lib/utils'
 import { getServerT } from '@/lib/i18n-server'
 import { VerificationActions } from './VerificationActions'
 
+interface AdminVerificationDetailRow {
+  id: string
+  character_name: string
+  screenshot_url: string
+  id_document_url: string
+  fee_paid: boolean
+  status: string
+  admin_notes: string | null
+  submitted_at: string
+  serviceiro: { display_name: string } | null
+}
+
 interface PageProps {
   params: Promise<{ id: string }>
 }
@@ -15,9 +27,10 @@ export default async function VerificationDetailPage(props: PageProps) {
 
   const { data: req } = await admin
     .from('verification_requests')
-    .select('*, serviceiro:profiles!serviceiro_id(display_name)')
+    .select('id, character_name, screenshot_url, id_document_url, fee_paid, status, admin_notes, submitted_at, serviceiro:profiles!serviceiro_id(display_name)')
     .eq('id', params.id)
     .single()
+    .overrideTypes<AdminVerificationDetailRow, { merge: false }>()
 
   if (!req) notFound()
 
