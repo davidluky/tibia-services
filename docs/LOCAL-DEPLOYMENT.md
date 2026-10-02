@@ -20,6 +20,20 @@ remains the fallback path.
 
 ## Current release blockers
 
+### Dependency release check — 2026-10-02
+
+The dependency-only candidate `52197d8` passed Node 24 quality gates and OpenNext
+packaging with zero npm advisories. Its application and migration sources are
+unchanged from the last successful production source `0b701c3`. The provider
+build exposed a configuration regression: `NEXT_PUBLIC_SUPABASE_URL` and
+`NEXT_PUBLIC_SUPABASE_ANON_KEY` were scoped only to preview. Both values were
+verified against the currently served public client, then their existing scopes
+were extended to production while preserving preview, encryption and values.
+No database, mail, account, or private credential value was changed. Publication
+still requires a successful provider build and anonymous live checks; the
+historical full setup checklist below does not attest newer migrations or live
+transactional workflows.
+
 Do not use `-ApproveProduction` until all of these are complete:
 
 1. Review and commit the active security, admin, email, and migration batch.
